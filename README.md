@@ -9,16 +9,16 @@ i) Assessment of sequence read quality.
     Surviving reads are aligned to the reference file.  Nucleotides extending beyond the end of the reference are discarded.  The aligned sequence is retained if the sequence identity between the read and the reference is greater or equal to 95%, and for which no insertion or deletion events were inferred.
     Surviving reads are processed, replacing all nucleotides with base quality score less than 30 with blank '-' nucleotides.  Sequences with at least 30 non-blank nucleotides are retained, and reported.
     
-- Compiling the code
+- Compiling the code:
 Compilation is achived with the command 'make samfire'.
 
-- Running the code
+- Running the code:
 The executable line is of the form ./samfire [reference] [.sam file] 
 
 where [reference] is a reference sequence for the alignment data in .fasta format, and [.sam file] comprises sequence data in .sam format.
 
-- Results produced
-Three files are produced by the code:
+- Results produced:
+Three files are produced by the code.
 
 Allele_frequencies.out: Describes the number of each nucleotide found at each locus in the reference sequence, in the format:
 	Locus	#nucleotides	#A	#C	#G	#T
