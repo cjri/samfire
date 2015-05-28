@@ -13,7 +13,7 @@ i) Assessment of sequence read quality.
 Compilation is achived with the command 'make samfire'.
 
 2. Running the code
-The executable line is of the form ./samfire [reference] [.sam file]
+The executable line is of the form ./samfire [reference] [.sam file] 
 
 where [reference] is a reference sequence for the alignment data in .fasta format, and [.sam file] comprises sequence data in .sam format.
 
