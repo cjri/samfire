@@ -1,0 +1,33 @@
+DirMult[d1_, c_] := 
+  Module[{Np, mean, a, L, k, p, i, p1, vec, p2, p3},
+   Np = Total[Flatten[d1]];
+   mean = N[Total[d1]/Np];
+   a = mean*c;
+   L = 0;
+   For[k = 1, k <= Length[d1], k++,
+    p = Log[Factorial[Total[d1[[k]]]]];
+    For[i = 1, i <= Length[d1[[k]]], i++,
+     p = p - Log[Factorial[d1[[k, i]]]];
+     ];
+    p1 = LogGamma[Total[a]];
+    vec = a + d1[[k]];
+    p2 = LogGamma[Total[vec]];
+    p3 = Total[
+      Table[LogGamma[vec[[i]]] - LogGamma[a[[i]]], {i, 1, 
+        Length[vec]}]];
+    p = p + p1 - p2 + p3;
+    L = L + p;
+    ];
+   Return[L];
+   ];
+
+SetDirectory["/Users/Chris/Documents/Influenza/Data/Ferret1/"];
+hlist = Import["Haps.list", "Table"]
+hdat = Table[Import[hlist[[i, 1]], "Table"], {i, 1, Length[hlist]}];
+tdat = Table[{hdat[[i, ;; , 2]], hdat[[i, ;; , 3]]}, {i, 1, 
+    Length[hdat]}];
+
+Plot[Total[Table[DirMult[tdat[[i]], x], {i, 1, Length[tdat]}]], {x, 1,
+   200}]
+FindMaximum[Total[Table[DirMult[tdat[[i]], x], {i, 1, Length[tdat]}]],
+  x]
