@@ -1,0 +1,348 @@
+MakeFLhap[hp_, cov_, len_] := Module[{b, i, j},
+   b = ConstantArray["-", len]; For[i = 1, i <= Length[b], i++,
+    For[j = 1, j <= Length[cov], j++,
+      If[cov[[j]] == i, b[[i]] = hp[[j]];
+        ];
+      ];
+    ];
+   Return[b];
+   ];
+
+NumConvert[hap_] := Module[{n, i},
+   n = {};
+   For[i = 1, i <= Length[hap], i++,
+    If[hap[[i]] != "-", AppendTo[n, i]];
+    ];
+   Return[n];
+   ];
+
+First Experiment
+
+SetDirectory["/Users/Chris/Documents/Influenza/Data"];
+Hlist = Import["Ferret1/Haps.list", "Table"];
+len = 8; (*Number of loci of interest*)
+(*Note: Where multiple \
+replicates are considered, data from all animals should be considered \
+together below; in the paper data from 3 and 8 animals were combined \
+to get a list of haplotypes from each experiment*)
+
+Hlist0 = Table[
+   "Ferret1/D0/" <> Hlist[[i, 1]], {i, 1, Length[Hlist]}];
+Hlist1 = Table[
+   "Ferret1/D1/" <> Hlist[[i, 1]], {i, 1, Length[Hlist]}];
+Hlist2 = Table[
+   "Ferret1/D3/" <> Hlist[[i, 1]], {i, 1, Length[Hlist]}];
+Hlist3 = Table[
+   "Ferret1/D5/" <> Hlist[[i, 1]], {i, 1, Length[Hlist]}];
+ 
+Cov0 = Import["Ferret1/D0/Cover.out", "Table"];
+Cov1 = Import["Ferret1/D1/Cover.out", "Table"];
+Cov2 = Import["Ferret1/D3/Cover.out", "Table"];
+Cov3 = Import["Ferret1/D5/Cover.out", "Table"];
+
+h0 = Table[Import[Hlist0[[i]], "Table"], {i, 1, Length[Hlist]}];
+h1 = Table[Import[Hlist1[[i]], "Table"], {i, 1, Length[Hlist]}];
+h2 = Table[Import[Hlist2[[i]], "Table"], {i, 1, Length[Hlist]}];
+h3 = Table[Import[Hlist3[[i]], "Table"], {i, 1, Length[Hlist]}];
+
+(*Set minimum number of partial haplotype observations required to \
+call a variant*)
+
+bigh0 = Select[
+    Table[{i, Total[h0[[i]][[;; , 1]]]}, {i, 1, 
+      Length[h0]}], #[[2]] >= 1 &][[;; , 1]];
+bigh1 = Select[
+    Table[{i, Total[h1[[i]][[;; , 1]]]}, {i, 1, 
+      Length[h1]}], #[[2]] >= 1 &][[;; , 1]];
+bigh2 = Select[
+    Table[{i, Total[h2[[i]][[;; , 1]]]}, {i, 1, 
+      Length[h2]}], #[[2]] >= 1 &][[;; , 1]];
+bigh3 = Select[
+    Table[{i, Total[h3[[i]][[;; , 1]]]}, {i, 1, 
+      Length[h3]}], #[[2]] >= 1 &][[;; , 1]];
+
+h0 = h0[[bigh0]];
+h1 = h1[[bigh1]];
+h2 = h2[[bigh2]];
+h3 = h3[[bigh3]];
+
+Cov0 = Cov0[[bigh0]];
+Cov1 = Cov1[[bigh1]];
+Cov2 = Cov2[[bigh2]];
+Cov3 = Cov3[[bigh3]];
+
+th0 = Table[Total[h0[[i]][[;; , 1]]], {i, 1, Length[h0]}];
+th1 = Table[Total[h1[[i]][[;; , 1]]], {i, 1, Length[h1]}];
+th2 = Table[Total[h2[[i]][[;; , 1]]], {i, 1, Length[h2]}];
+th3 = Table[Total[h3[[i]][[;; , 1]]], {i, 1, Length[h3]}];
+
+(*Select minimum partial haplotype frequency required to call a \
+variant*)
+For[j = 1, j <= Length[h0], j++,
+  h0[[j]] = Select[h0[[j]], #[[1]] > 10 && #[[1]] >= th0[[j]]/100 &];
+  ];
+For[j = 1, j <= Length[h1], j++,
+  h1[[j]] = Select[h1[[j]], #[[1]] > 10 && #[[1]] >= th1[[j]]/100 &];
+  ];
+For[j = 1, j <= Length[h2], j++,
+  h2[[j]] = Select[h2[[j]], #[[1]] > 10 && #[[1]] >= th2[[j]]/100 &];
+  ];
+For[j = 1, j <= Length[h3], j++,
+  h3[[j]] = Select[h3[[j]], #[[1]] > 10 && #[[1]] >= th3[[j]]/100 &];
+  ];
+
+fhaps0 = Partition[
+   Flatten[Table[
+     Table[MakeFLhap[h0[[j, ;; , 2 ;;]][[i]], Cov0[[j]], 8], {i, 1, 
+       Length[h0[[j]]]}], {j, 1, Length[h0]}]], len];
+fhaps1 = Partition[
+   Flatten[Table[
+     Table[MakeFLhap[h1[[j, ;; , 2 ;;]][[i]], Cov1[[j]], 8], {i, 1, 
+       Length[h1[[j]]]}], {j, 1, Length[h1]}]], len];
+fhaps2 = Partition[
+   Flatten[Table[
+     Table[MakeFLhap[h2[[j, ;; , 2 ;;]][[i]], Cov2[[j]], 8], {i, 1, 
+       Length[h2[[j]]]}], {j, 1, Length[h2]}]], len];
+fhaps3 = Partition[
+   Flatten[Table[
+     Table[MakeFLhap[h3[[j, ;; , 2 ;;]][[i]], Cov3[[j]], 8], {i, 1, 
+       Length[h3[[j]]]}], {j, 1, Length[h3]}]], len];
+allhaps = 
+  Sort[DeleteDuplicates[Join[fhaps0, fhaps1, fhaps2, fhaps3]], 
+   Length[Select[#1, # == "-" &]] < Length[Select[#2, # == "-" &]] &];
+
+Delete Potentially Identical Haplotypes A in B
+
+dups = {};
+pairs = {};
+For[i = 1, i <= Length[allhaps], i++,
+  For[j = i + 1, j <= Length[allhaps], j++,
+    match = 0;
+    For[k = 1, k <= Length[allhaps[[i]]], k++,
+     If[MemberQ[{"A", "C", "G", "T"}, allhaps[[i, k]]] == True && 
+        MemberQ[{"A", "C", "G", "T"}, allhaps[[j, k]]] == True, 
+       match = 1];
+     ];
+    For[k = 1, k <= Length[allhaps[[i]]], k++,
+     If[MemberQ[{"A", "C", "G", "T"}, allhaps[[i, k]]] == True && 
+        MemberQ[{"A", "C", "G", "T"}, allhaps[[j, k]]] == True && 
+        allhaps[[i, k]] != allhaps[[j, k]],
+       match = 0;
+       ];
+     ];
+    For[k = 1, k <= Length[allhaps[[i]]], k++,
+     If[allhaps[[i, k]] == "-" && allhaps[[j, k]] != "-",
+       match = 0;
+       ];
+     ];
+    If[match == 1, AppendTo[pairs, {i, j}]];
+    ];
+  ];
+dups = Sort[DeleteDuplicates[pairs[[;; , 2]]], #1 < #2 &];
+uniqs = Select[
+    Tally[Join[Table[i, {i, 1, Length[allhaps]}], 
+      DeleteDuplicates[dups]]], #[[2]] == 1 &][[;; , 1]];
+ahaps = allhaps[[uniqs]];
+
+Detect overlaps
+
+numhaps = Table[NumConvert[ahaps[[i]]], {i, 1, Length[ahaps]}];
+newhaps = {};
+For[i = 1, i <= Length[ahaps], i++,
+  For[j = 1, j <= Length[ahaps], j++,
+    If[i != j && Min[numhaps[[i]]] <= Min[numhaps[[j]]] && 
+       Max[numhaps[[j]]] >= Max[numhaps[[i]]],
+      overlap = 
+       Select[Tally[
+          Join[numhaps[[i]], numhaps[[j]]]], #[[2]] == 2 &][[;; , 
+         1]];
+      (*Print[{"Overlap",i,j,ahaps[[i]],ahaps[[j]],Min[numhaps[[i]]],
+      Min[numhaps[[j]]],overlap,ahaps[[i,overlap]],ahaps[[j,
+      overlap]]}];*)
+      
+      If[ahaps[[j, overlap]] == ahaps[[i, overlap]] && 
+        Length[overlap] > 0,
+       (*Print["Match"];*)
+       
+       pre = Select[Table[i, {i, 1, len}], # < Min[overlap] &];
+       If[Length[pre] > 0, pres = ahaps[[i, pre]], pres = {}];
+       post = Select[Table[i, {i, 1, len}], # > Max[overlap] &];
+       If[Length[post] > 0, posts = ahaps[[j, post]], posts = {}];
+       overlaps = ahaps[[i, overlap]];
+       new = Join[pres, overlaps, posts];
+       AppendTo[newhaps, new];
+       (*Print[new];*)
+       ];
+      ];
+    ];
+  ];
+ahaps = Join[ahaps, newhaps];
+ahaps = Sort[ahaps, 
+   Length[Select[#1, # == "-" &]] < Length[Select[#2, # == "-" &]] &];
+
+Delete Potentially Identical Haplotypes A in B
+
+dups = {};
+pairs = {};
+For[i = 1, i <= Length[ahaps], i++,
+  For[j = i + 1, j <= Length[ahaps], j++,
+    match = 0;
+    For[k = 1, k <= Length[ahaps[[i]]], k++,
+     If[MemberQ[{"A", "C", "G", "T"}, ahaps[[i, k]]] == True && 
+        MemberQ[{"A", "C", "G", "T"}, ahaps[[j, k]]] == True, 
+       match = 1];
+     ];
+    For[k = 1, k <= Length[ahaps[[i]]], k++,
+     If[MemberQ[{"A", "C", "G", "T"}, ahaps[[i, k]]] == True && 
+        MemberQ[{"A", "C", "G", "T"}, ahaps[[j, k]]] == True && 
+        ahaps[[i, k]] != ahaps[[j, k]],
+       match = 0;
+       ];
+     ];
+    For[k = 1, k <= Length[ahaps[[i]]], k++,
+     If[ahaps[[i, k]] == "-" && ahaps[[j, k]] != "-",
+       match = 0;
+       ];
+     ];
+    If[match == 1, AppendTo[pairs, {i, j}]];
+    ];
+  ];
+dups = Sort[DeleteDuplicates[pairs[[;; , 2]]], #1 < #2 &];
+uniqs = Select[
+    Tally[Join[Table[i, {i, 1, Length[ahaps]}], 
+      DeleteDuplicates[dups]]], #[[2]] == 1 &][[;; , 1]];
+ahaps = ahaps[[uniqs]];
+
+Detect overlaps
+
+numhaps = Table[NumConvert[ahaps[[i]]], {i, 1, Length[ahaps]}];
+newhaps = {};
+For[i = 1, i <= Length[ahaps], i++,
+  For[j = 1, j <= Length[ahaps], j++,
+    If[i != j && Min[numhaps[[i]]] <= Min[numhaps[[j]]] && 
+       Max[numhaps[[j]]] >= Max[numhaps[[i]]],
+      overlap = 
+       Select[Tally[
+          Join[numhaps[[i]], numhaps[[j]]]], #[[2]] == 2 &][[;; , 
+         1]];
+      (*Print[{"Overlap",i,j,ahaps[[i]],ahaps[[j]],Min[numhaps[[i]]],
+      Min[numhaps[[j]]],overlap,ahaps[[i,overlap]],ahaps[[j,
+      overlap]]}];*)
+      
+      If[ahaps[[j, overlap]] == ahaps[[i, overlap]] && 
+        Length[overlap] > 0,
+       (*Print["Match"];*)
+       
+       pre = Select[Table[i, {i, 1, len}], # < Min[overlap] &];
+       If[Length[pre] > 0, pres = ahaps[[i, pre]], pres = {}];
+       post = Select[Table[i, {i, 1, len}], # > Max[overlap] &];
+       If[Length[post] > 0, posts = ahaps[[j, post]], posts = {}];
+       overlaps = ahaps[[i, overlap]];
+       new = Join[pres, overlaps, posts];
+       AppendTo[newhaps, new];
+       (*Print[new];*)
+       ];
+      ];
+    ];
+  ];
+ahaps = Join[ahaps, newhaps];
+ahaps = Sort[ahaps, 
+   Length[Select[#1, # == "-" &]] < Length[Select[#2, # == "-" &]] &];
+
+Delete Potentially Identical Haplotypes A in B
+
+dups = {};
+pairs = {};
+For[i = 1, i <= Length[ahaps], i++,
+  For[j = i + 1, j <= Length[ahaps], j++,
+    match = 0;
+    For[k = 1, k <= Length[ahaps[[i]]], k++,
+     If[MemberQ[{"A", "C", "G", "T"}, ahaps[[i, k]]] == True && 
+        MemberQ[{"A", "C", "G", "T"}, ahaps[[j, k]]] == True, 
+       match = 1];
+     ];
+    For[k = 1, k <= Length[ahaps[[i]]], k++,
+     If[MemberQ[{"A", "C", "G", "T"}, ahaps[[i, k]]] == True && 
+        MemberQ[{"A", "C", "G", "T"}, ahaps[[j, k]]] == True && 
+        ahaps[[i, k]] != ahaps[[j, k]],
+       match = 0;
+       ];
+     ];
+    For[k = 1, k <= Length[ahaps[[i]]], k++,
+     If[ahaps[[i, k]] == "-" && ahaps[[j, k]] != "-",
+       match = 0;
+       ];
+     ];
+    If[match == 1, AppendTo[pairs, {i, j}]];
+    ];
+  ];
+dups = Sort[DeleteDuplicates[pairs[[;; , 2]]], #1 < #2 &];
+uniqs = Select[
+    Tally[Join[Table[i, {i, 1, Length[ahaps]}], 
+      DeleteDuplicates[dups]]], #[[2]] == 1 &][[;; , 1]];
+ahaps = ahaps[[uniqs]];
+
+Combination
+
+newhaps = {};
+numhaps = Table[NumConvert[ahaps[[i]]], {i, 1, Length[ahaps]}];
+For[i = 1, i <= Length[ahaps], i++,
+  If[Length[numhaps[[i]]] < len,
+    (*Print[{i,len,numhaps[[i]]}];*)
+    
+    comp = Select[
+       Tally[Join[Table[i, {i, 1, len}], numhaps[[i]]]], #[[2]] == 
+         1 &][[;; , 1]];
+    pre = 
+     Select[DeleteDuplicates[ahaps[[;; , comp]]], 
+      MemberQ[#, "-"] == False &];
+    (*Print[pre];*)
+    b = ConstantArray["=", len];
+    For[j = 1, j <= Length[pre], j++,
+     b[[comp]] = pre[[j]];
+     b[[numhaps[[i]]]] = ahaps[[i, numhaps[[i]]]];
+     AppendTo[newhaps, b];
+     ];
+    ];
+  ];
+ahaps = Join[ahaps, newhaps];
+ahaps = Sort[ahaps, 
+   Length[Select[#1, # == "-" &]] < Length[Select[#2, # == "-" &]] &];
+
+
+dups = {};
+pairs = {};
+For[i = 1, i <= Length[ahaps], i++,
+  For[j = i + 1, j <= Length[ahaps], j++,
+    match = 0;
+    For[k = 1, k <= Length[ahaps[[i]]], k++,
+     If[MemberQ[{"A", "C", "G", "T"}, ahaps[[i, k]]] == True && 
+        MemberQ[{"A", "C", "G", "T"}, ahaps[[j, k]]] == True, 
+       match = 1];
+     ];
+    For[k = 1, k <= Length[ahaps[[i]]], k++,
+     If[MemberQ[{"A", "C", "G", "T"}, ahaps[[i, k]]] == True && 
+        MemberQ[{"A", "C", "G", "T"}, ahaps[[j, k]]] == True && 
+        ahaps[[i, k]] != ahaps[[j, k]],
+       match = 0;
+       ];
+     ];
+    For[k = 1, k <= Length[ahaps[[i]]], k++,
+     If[ahaps[[i, k]] == "-" && ahaps[[j, k]] != "-",
+       match = 0;
+       ];
+     ];
+    If[match == 1, AppendTo[pairs, {i, j}]];
+    ];
+  ];
+dups = Sort[DeleteDuplicates[pairs[[;; , 2]]], #1 < #2 &];
+uniqs = Select[
+    Tally[Join[Table[i, {i, 1, Length[ahaps]}], 
+      DeleteDuplicates[dups]]], #[[2]] == 1 &][[;; , 1]];
+ahaps = ahaps[[uniqs]];
+
+Length[ahaps]
+
+48
+
+Export["Haps1.dat", ahaps];
