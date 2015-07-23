@@ -1,0 +1,45 @@
+Import HA data
+
+GetFreqs[dat_, t_] := Module[{dd, i, d, j, t1, freqs},
+   dd = {};
+   For[i = 1, i <= Length[dat[[1]]], i++,
+    d = {};
+    AppendTo[d, {i, Length[t]}];
+    For[j = 1, j <= Length[t], j++,
+     AppendTo[
+       d, {t[[j]], dat[[j, i, 3 ;; 6]], Total[dat[[j, i, 3 ;; 6]]]}];
+     ];
+    AppendTo[dd, Flatten[d]];
+    ];
+   t1 = Table[{j, 
+      Max[Table[
+        Sort[dd[[j, 4 + 6 i ;; 7 + 6 i]]/
+           dd[[j, 8 + 6 i]], #1 > #2 &][[2]], {i, 0, 
+         Length[t] - 1}]]}, {j, 1, Length[dd]}];
+   freqs = dd[[Select[t1, #[[2]] > 0.01 &][[;; , 1]]]];
+   Return[freqs];
+   ];
+
+SetDirectory["/Users/Chris/Documents/Influenza/Data/Ferret1/Aligned/"];
+sets = {"Sample0", "Sample1", "Sample3", "Sample5"};
+AllFreqs = {};
+
+(*Ferret 1*)
+dat = Table[
+   Import[sets[[i]] <> "/Allele_frequencies.out", 
+    "Table"], {i, {1, 2, 3, 4}}];
+t = {0, 1, 3, 5};
+AppendTo[AllFreqs, GetFreqs[dat, t]];
+
+Export single allele data
+
+k = 1;
+For[j = 1, j <= Length[AllFreqs[[k]]], j++,
+  a = AllFreqs[[k, j]];
+  t2 = Transpose[
+    Join[{{"A", "C", "G", "T"}}, 
+     Table[a[[4 + 6 i ;; 7 + 6 i]], {i, 
+       0, (Length[AllFreqs[[k, 1]]] - 8)/6}]]];
+  Export["/Users/Chris/Documents/Influenza/Data/Ferret1/Locus" <> 
+    ToString[a[[1]]] <> ".dat", t2];
+  ];
