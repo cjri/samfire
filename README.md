@@ -246,7 +246,7 @@ Output is given in one of two sets of formats.  By default a single output file 
 
 Multi_locus_trajectories.out is a list of multi-locus variants, recorded over time.  The format is:
 
-#Loci [Set of loci] Variant #times [Time #observations]
+Number of Loci [Set of loci] Variant #times [Time #observations]
 
 where the set of loci specifies at which loci information was available from the dataset.  Within this file, longer partial haplotypes take priority when reporting variants; for example reports of the variant AG at loci 1 and 2 are not included in the reports of A at position 1 or of G at position 2.
 
