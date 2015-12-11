@@ -21,7 +21,7 @@ Samfire processes data via a series of subprograms:
 Details of the individual programs follows:
   
 
-./samfire filter —ref <ref> [options]: carries out QC on a set of data, returning a list of filtered reads.  Here <ref> is the name of a reference file in fasta format.
+./samfire filter --ref <ref> [options]: carries out QC on a set of data, returning a list of filtered reads.  Here <ref> is the name of a reference file in fasta format.
 
 Required inputs:
 
