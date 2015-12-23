@@ -13,7 +13,7 @@ void GetOptions (run_params& p, int argc, const char **argv) {
 	p.ali_qual=30;
 	p.ali_inc=0;
 	p.min_rlen=30;
-	p.sorted=1;
+	p.sorted=0;
 	p.qlib=1;
 	p.q_cut=0.01;
 	p.qp_cut=1e-3;
