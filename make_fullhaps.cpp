@@ -411,3 +411,273 @@ void ResetHaps (vector<int> incl, vector< vector<char> >& haps) {
 
 
 
+
+
+
+
+/*
+
+void ConstructFullHaps (run_params p, vector< vector<char> >& haps) {
+	cout << "Inferring full haplotypes...\n";
+	
+	
+	//Step zero: Identify loci with only one nucleotide
+	UniqueStep(p,haps);
+
+	//Cycle over first two steps
+	for (int c=0;c<=20;c++) {
+		vector< vector<char> > haps2=haps;
+		//Step one: redundancy
+		RedundancyStep (p,haps);
+
+		//Step two: overlap
+		OverlapStep (p,haps);
+		
+	//	DuplicateStep(p,haps);
+
+		if (haps2==haps) {
+			cout << "Done\n";
+			break;
+		}
+	}
+	//Step 3: Combination 1: Make full haplotypes from disjoint sequences
+	CombinationOne(p,haps);
+	RedundancyStep (p,haps);
+	//DuplicateStep(p,haps);
+	
+	cout << "Combination Two\n";
+	CombinationTwo(p,haps);
+	
+	RedundancyStep(p,haps);
+	
+	vector<par> sf;
+	GetStartFinish(sf,haps);
+//	cout << "Start-finish\n";
+//	for (int i=0;i<sf.size();i++) {
+//		cout << i << " " << sf[i].i1 << " " << sf[i].i2 << "\n";
+//	}
+
+	vector< vector<char> > new_haps;
+	BuildPaths(sf,haps,new_haps);
+	haps=new_haps;
+	if (p.verb==1) {
+		PrintHaps(haps);
+	}
+
+//	DuplicateStep(p,haps);
+
+	//Step 4: Combination 2: Merge non-full haplotypes with full haplotypes
+//	CombinationTwo(p,haps);
+//	RedundancyStep(p,haps);
+	
+	ofstream haps_file;
+	haps_file.open("Haps1.dat");
+	for (int i=0;i<haps.size();i++) {
+		for (int j=0;j<haps[i].size();j++) {
+			haps_file << haps[i][j];
+		}
+		haps_file << "\n";
+	}
+	haps_file.close();
+}
+
+void UniqueStep (run_params p, vector< vector<char> >& haps) {
+	for (int j=0;j<haps[0].size();j++) {
+		int uniq=1;
+		char c='-';
+		for (int i=0;i<haps.size();i++) {
+			if (c=='-'&&haps[i][j]!='-') {
+				c=haps[i][j];
+			}
+			if (c!='-'&&haps[i][j]!='-'&&haps[i][j]!=c) {
+				uniq=0;
+			}
+		}
+		cout << "Unique " << j << " " << uniq << "\n";
+		if (uniq==1) {
+			for (int i=0;i<haps.size();i++) {
+				if (haps[i][j]=='-') {
+					if (j==0&&haps[i][1]!='-') {
+						haps[i][j]=c;
+					} else if (j==haps[0].size()&&haps[i][haps[0].size()-1]!='-') {
+						haps[i][j]=c;
+					} else if (haps[i][j-1]!='-'||haps[i][j+1]!='-') {
+						haps[i][j]=c;
+					}
+				}
+			}
+		}
+	}
+	if (p.verb==1) {
+		PrintHaps(haps);
+	}
+}
+
+
+void RedundancyStep (run_params p, vector< vector<char> >& haps) {
+	if (p.verb==1) {
+		cout << "Redundancy step\n";
+	}
+	vector<int> incl (haps.size(),1);
+	for (int i=0;i<haps.size();i++) {
+		if (incl[i]==1) {
+			for (int j=0;j<haps.size();j++) {
+				if (incl[j]==1&&i!=j) {
+					int match=1;
+					for	(int k=0;k<haps[i].size();k++) {
+						//Check whether j has same nucleotides as i whenever j has a nucleotide
+						if (haps[j][k]!='-'&&haps[j][k]!=haps[i][k]) {
+							match=0;
+						}
+					}
+					if (match==1) {
+						incl[j]=0;
+					}
+				}
+			}
+		}
+	}
+	ResetHaps(incl,haps);
+	if (p.verb==1) {
+		PrintHaps(haps);
+	}
+}
+
+
+void OverlapStep (run_params p, vector< vector<char> >& haps) {
+	if (p.verb==1) {
+		cout << "Overlap step\n";
+	}
+	vector<int> incl (haps.size(),1);
+	int size=haps.size();
+	for (int i=0;i<size;i++) {
+		if (incl[i]==1) {
+			for (int j=0;j<size;j++) {
+				if (incl[j]==1&&i!=j) {
+					int match=1;
+					int n_match=0;
+					for	(int k=0;k<haps[i].size();k++) {
+						//Check whether i and j have the same nucleotides wherever they overlap.  If so, create a new haplotype
+						if (haps[j][k]!='-'&&haps[i][k]!='-') { //Number of overlaps
+							n_match++;
+						}
+						
+						
+						if (haps[j][k]!='-'&&haps[i][k]!='-'&&haps[j][k]!=haps[i][k]) {
+							match=0;
+						}
+					}
+					if (match==1&&n_match>0) {
+						vector<char> newhap;
+						for	(int k=0;k<haps[i].size();k++) {
+							if (haps[j][k]!='-') {
+								newhap.push_back(haps[j][k]);
+							} else if (haps[i][k]!='-') {
+								newhap.push_back(haps[i][k]);
+							} else {
+								newhap.push_back('-');
+							}
+						}
+						haps.push_back(newhap);
+						incl.push_back(1);
+					}
+				}
+			}
+		}
+	}
+	ResetHaps(incl,haps);
+	if (p.verb==1) {
+		PrintHaps(haps);
+	}
+}
+
+void CombinationOne (run_params p, vector< vector<char> >& haps) {
+	//Merge sets of reads that collectively span all loci
+	vector<int> incl (haps.size(),1);
+	int size=haps.size();
+	for (int i=0;i<size;i++) {
+		if (incl[i]==1) {
+			for (int j=0;j<size;j++) {
+				if (incl[j]==1&&i!=j) {
+					int match=1;
+					int n_i=0;
+					int n_j=0;
+					for	(int k=0;k<haps[i].size();k++) {
+						//Check whether i and j collectively span all loci.  If so, create new haplotype
+						if (haps[i][k]!='-') {
+							n_i++;
+						}
+						if (haps[j][k]!='-') {
+							n_j++;
+						}
+						
+						if (haps[j][k]=='-'&&haps[i][k]=='-') {
+							match=0;
+						}
+					}
+					if (match==1&&n_i<haps[i].size()&&n_j<haps[i].size()) {
+						vector<char> newhap;
+						for	(int k=0;k<haps[i].size();k++) {
+							if (haps[j][k]!='-') {
+								newhap.push_back(haps[j][k]);
+							} else if (haps[i][k]!='-') {
+								newhap.push_back(haps[i][k]);
+							} else {
+								newhap.push_back('-');
+							}
+						}
+						haps.push_back(newhap);
+						incl.push_back(1);
+					}
+				}
+			}
+		}
+	}
+	ResetHaps(incl,haps);
+	if (p.verb==1) {
+		PrintHaps(haps);
+	}
+}
+
+
+
+
+void CombinationTwo (run_params p, vector< vector<char> >& haps) {
+	vector<int> incl (haps.size(),1);
+	int size=haps.size();
+	for (int i=0;i<size;i++) {
+		if (incl[i]==1) {
+			for (int j=0;j<size;j++) {
+				if (incl[j]==1&&i!=j) {
+					int n_i=0;
+					int n_j=0;
+					for	(int k=0;k<haps[i].size();k++) {
+						//Check whether i and j collectively span all loci.  If so, create new haplotype
+						if (haps[i][k]!='-') {
+							n_i++;
+						}
+						if (haps[j][k]!='-') {
+							n_j++;
+						}
+					}
+					if (n_i==haps[i].size()&&n_j<haps[i].size()) {
+						//Add in haplotype i with alleles replaced by those of j
+						vector<char> newhap=haps[i];
+						for	(int k=0;k<haps[i].size();k++) {
+							if (haps[j][k]!='-') {
+								newhap[k]=haps[j][k];
+							}
+						}
+						haps.push_back(newhap);
+						incl.push_back(1);
+					}
+				}
+			}
+		}
+	}
+	ResetHaps(incl,haps);
+	if (p.verb==1) {
+		PrintHaps(haps);
+	}
+}
+*/

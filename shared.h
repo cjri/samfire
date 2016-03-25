@@ -47,6 +47,7 @@ struct run_params {
 	double dq_cut; //Cutoff change in allele frequency per day for potential neutrality
 	double seed; //Random seed
 	int skip;
+	int no_sam; //Skip reading in list of .sam files in calling single-locus variants
 	int det; //Flag to use deterministic model of single-locus evolution; no mutation or drift
 	double mu; //Mutation rate for single-locus evolution model
 	double hap_q_cut;  //Minimum freuqency within a dataset at which to include a partial haplotype
@@ -61,6 +62,8 @@ struct run_params {
 	int get_out; //Flag to use read output file
 	int full_haps; //Flag to generate full haplotypes
 	int full_rep; //Flag to give Multi_locus_haplotypes output
+	int vs_ref; //Call against the given reference sequence, rather than against the consensus in the first time point at each position
+	int gmaf; //Call polymorphisms that are fixed against the reference sequence
 	int verb; //Verbose output
 };
 
@@ -99,6 +102,7 @@ struct alldat {
 struct poly {
 	int locus;
 	char nuc;
+	char cons;
 };
 
 struct mpoly {
@@ -182,5 +186,6 @@ struct nuc {
 
 
 
+double DirichletMultiCalc (int N, double c, vector<int> obs, vector<double> inf, vector<double>& fact_store);
 
 

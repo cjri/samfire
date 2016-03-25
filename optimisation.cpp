@@ -14,7 +14,8 @@ void GetFactVectorSL (vector<str> sltrajs, vector<double>& fact_store) {
 			}
 		}
 	}
-	maxN=maxN+10;
+	maxN=maxN*2;
+	cout << maxN << "\n";
 	FindLogFact(fact_store,maxN);
 }
 
@@ -357,7 +358,7 @@ double OptimiseSLTraj (int verb, run_params p, int maxrep, int traj, char sel_mo
 	SetInitialFreqs (init_freqs,n_haps,rgen);
 
 	vector<double> sigs;
-	SetInitialSelection(tds,sel_model,n_times,sigs,rgen);
+	SetInitialSelection(p,tds,sel_model,n_times,sigs,rgen);
 	
 	vector< vector<double> > hapsigs;
 	SigsHapSigs(tds,sel_model,n_times,sigs,hapsigs);
@@ -573,6 +574,11 @@ void SetInitialFreqs (vector<double>& init_freqs, int n_haps, gsl_rng *rgen) {
 		init_freqs.push_back(x);
 	}
 	NormaliseFreqs(init_freqs,n_haps);
+//	cout << "Initial freqs: ";
+//	for (int i=0;i<n_haps;i++) {
+//		cout << init_freqs[i] << " ";
+//	}
+//	cout << "\n";
 }
 
 void NormaliseFreqs (vector<double>& init_freqs, int n_haps) {
@@ -585,14 +591,24 @@ void NormaliseFreqs (vector<double>& init_freqs, int n_haps) {
 	}
 }
 
-void SetInitialSelection (int tds, char sel_model, int n_times, vector<double>& sigs, gsl_rng *rgen) {
+void SetInitialSelection (run_params p, int tds, char sel_model, int n_times, vector<double>& sigs, gsl_rng *rgen) {
 	if (sel_model!='0') {
 		if (tds==0) {
-			double s=gsl_rng_uniform(rgen)-0.5;
+			double s=0;
+			if (p.det==1) {
+				s=(gsl_rng_uniform(rgen)*0.05);
+			} else {
+				s=gsl_rng_uniform(rgen)+0.05;
+			}
 			sigs.push_back(s);
 		} else {
 			for (int t=0;t<n_times-1;t++) {
-				double s=gsl_rng_uniform(rgen)-0.5;
+				double s=0;
+				if (p.det==1) {
+					s=(gsl_rng_uniform(rgen)*0.1);
+				} else {
+					s=gsl_rng_uniform(rgen)-0.5;
+				}
 				sigs.push_back(s);
 			}
 		}

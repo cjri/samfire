@@ -119,7 +119,14 @@ int main(int argc, const char **argv) {
 		
 		//Load sam file data
 		vector<string> sam_files;
-		ImportSamFileNames(p,sam_files);
+		if (p.no_sam>0) {
+			for (int i=0;i<p.no_sam;i++) {
+				string s;
+				sam_files.push_back(s);
+			}
+		} else {
+			ImportSamFileNames(p,sam_files);
+		}
 		
 		//Get joined and aligned sequence reads
 		vector<nuc> ref_counts;
@@ -138,7 +145,11 @@ int main(int argc, const char **argv) {
 		
 		//Identify frequencies above a given cutoff
 		vector<poly> polys;
-		CallPolymorphisms (p,refseq,ref_counts,polys);
+		if (p.vs_ref==1) {
+			CallPolymorphismsVsRef (p,refseq,ref_counts,polys);
+		} else {
+			CallPolymorphisms (p,refseq,ref_counts,polys);
+		}
 		
 		//Construct single-locus tranjectories.  Contains locus, times, four nucleotide counts
 		vector<str> sltrajs;
@@ -159,10 +170,12 @@ int main(int argc, const char **argv) {
 		if (p.get_in==0) {
 			p.in_file="Single_locus_trajectories.out";
 		}
+		
 		ImportSLTData(p,sltrajs);  //N.B. Times are encoded in the trajectories
 
-		SLTFreqs(p,sltrajs);
+		SLTFreqs(p,sltrajs); //Convert observations to frequencies
 
+		
 		//Remove trajectories that move by more than a cutoff amount per day
 		cout << "Size " << sltrajs[0].times.size() << "\n";
 		
@@ -172,10 +185,10 @@ int main(int argc, const char **argv) {
 		
 		//Remove non-polymorphic time-points from trajectories
 		FilterSLTrajs2(p,sltrajs);
-
+		
 		//Calculate mean frequencies of trajectories - approximate fit under assumption of neutrality
 		SLTMeanFreqs(p,sltrajs);
-		
+
 		//Calculate vector of log factorials
 		vector<double> fact_store;
 		GetFactVectorSL(sltrajs,fact_store);
@@ -239,7 +252,11 @@ int main(int argc, const char **argv) {
 		
 		//Read in polymorphic loci
 		vector<int> polys;
-		ImportSLTLoci(p.in_file.c_str(),polys);
+		int check=0;
+		ImportSLTLoci(p.in_file.c_str(),check,polys);
+		if (check==1) {
+			return 0;
+		}
 		
 		//Read in times
 		vector<int> times;

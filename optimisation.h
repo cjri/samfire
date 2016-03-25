@@ -24,7 +24,7 @@ void GetMutationMatrix (double mu, vector <vector <double> >& mut);
 void SquareMutationMatrix (vector<vector<double> > &m );
 void SetInitialFreqs (vector<double>& init_freqs, int n_haps, gsl_rng *rgen);
 void NormaliseFreqs (vector<double>& init_freqs, int n_haps);
-void SetInitialSelection (int tds, char sel_model, int n_times, vector<double>& sigs, gsl_rng *rgen);
+void SetInitialSelection (run_params p, int tds, char sel_model, int n_times, vector<double>& sigs, gsl_rng *rgen);
 void SigsHapSigs (int tds, char sel_model, int n_times, vector<double> sigs, vector< vector<double> >& hapsigs);
 void Propagation(int verb, vector<int> times, vector<double> init_freqs, vector< vector<double> > mut, vector< vector<double> > hapsigs, vector< vector<double> >& inf);
 void DeterministicPropagation(int verb, vector<int> times, vector<double> init_freqs, vector< vector<double> > hapsigs, vector< vector<double> >& inf);

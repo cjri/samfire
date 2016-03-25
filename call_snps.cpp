@@ -4,6 +4,8 @@
 #include "io.h"
 #include <iostream>
 #include <string>
+#include <sstream>
+
 
 void CountNucleotides (run_params p, rseq refseq, vector<string> sam_files, vector< vector<joined> > t_reads, vector<nuc>& ref_counts) {
 	if (p.verb==1) {
@@ -84,6 +86,154 @@ void SetupRCount (rseq refseq, nuc& r_count) {
 	}
 }
 
+void CallPolymorphismsVsRef (run_params p, rseq refseq, vector<nuc> ref_counts, vector<poly>& polys) {
+	if (p.verb==1) {
+		cout << "Calling polymorphisms versus reference sequence...\n";
+	}
+	vector<char> consensus;
+	//Define consensus as the reference sequence
+	consensus.push_back('X');
+	for (int j=0;j<refseq.size;j++) {
+		char n=refseq.seq[j];
+		cout << n;
+		consensus.push_back(n);
+	}
+	cout << "\n";
+	cout << "Consensus size " << consensus.size() << "\n";
+	for (int i=0;i<ref_counts.size();i++) { //Time points
+		if (p.verb==1) {
+			cout << "Time point #" << i << "\n";
+		}
+		for (int j=0;j<refseq.size;j++) {
+			//Here, know the consensus.  For all other nucleotides, check to see whether the SNP criteria are fulfilled
+			double fA=(ref_counts[i].nA[j]+0.)/(ref_counts[i].nN[j]+0.);
+			double fC=(ref_counts[i].nC[j]+0.)/(ref_counts[i].nN[j]+0.);
+			double fG=(ref_counts[i].nG[j]+0.)/(ref_counts[i].nN[j]+0.);
+			double fT=(ref_counts[i].nT[j]+0.)/(ref_counts[i].nN[j]+0.);
+			char cons=consensus[j];
+			if (consensus[j]=='A') {
+				vector<double> freqs;
+				vector<char> nuc;
+				vector<int> counts;
+				freqs.push_back(fC);
+				freqs.push_back(fG);
+				freqs.push_back(fT);
+				nuc.push_back('C');
+				nuc.push_back('G');
+				nuc.push_back('T');
+				counts.push_back(ref_counts[i].nC[j]);
+				counts.push_back(ref_counts[i].nG[j]);
+				counts.push_back(ref_counts[i].nT[j]);
+				ProcessPVsRef(p,j,freqs,nuc,cons,counts,ref_counts[i].nN[j],polys);
+			}
+			if (consensus[j]=='C') {
+				vector<double> freqs;
+				vector<char> nuc;
+				vector<int> counts;
+				freqs.push_back(fA);
+				freqs.push_back(fG);
+				freqs.push_back(fT);
+				nuc.push_back('A');
+				nuc.push_back('G');
+				nuc.push_back('T');
+				counts.push_back(ref_counts[i].nA[j]);
+				counts.push_back(ref_counts[i].nG[j]);
+				counts.push_back(ref_counts[i].nT[j]);
+				ProcessPVsRef(p,j,freqs,nuc,cons,counts,ref_counts[i].nN[j],polys);
+			}
+			if (consensus[j]=='G') {
+				vector<double> freqs;
+				vector<char> nuc;
+				vector<int> counts;
+				freqs.push_back(fA);
+				freqs.push_back(fC);
+				freqs.push_back(fT);
+				nuc.push_back('A');
+				nuc.push_back('C');
+				nuc.push_back('T');
+				counts.push_back(ref_counts[i].nA[j]);
+				counts.push_back(ref_counts[i].nC[j]);
+				counts.push_back(ref_counts[i].nT[j]);
+				ProcessPVsRef(p,j,freqs,nuc,cons,counts,ref_counts[i].nN[j],polys);
+			}
+			if (consensus[j]=='T') {
+				vector<double> freqs;
+				vector<char> nuc;
+				vector<int> counts;
+				freqs.push_back(fA);
+				freqs.push_back(fC);
+				freqs.push_back(fG);
+				nuc.push_back('A');
+				nuc.push_back('C');
+				nuc.push_back('G');
+				counts.push_back(ref_counts[i].nA[j]);
+				counts.push_back(ref_counts[i].nC[j]);
+				counts.push_back(ref_counts[i].nG[j]);
+				ProcessPVsRef(p,j,freqs,nuc,cons,counts,ref_counts[i].nN[j],polys);
+			}
+		}
+	}
+	//Delete duplicate polymorphisms
+	DeleteDuplicatePolymporphisms(p,polys);
+}
+
+void DeleteDuplicatePolymporphisms (run_params p, vector<poly>& polys) {
+	vector<poly> poly2;
+	vector<int> x; //Vectors of previously observed trajectories
+	vector<char> c;
+	for (int i=0;i<polys.size();i++) {
+		int inc=0;
+		for (int j=0;j<x.size();j++) { //Previously recorded polymorphisms
+			if (polys[i].locus==x[j]&&polys[i].nuc==c[j]) {
+				inc++;
+			}
+		}
+		x.push_back(polys[i].locus);
+		c.push_back(polys[i].nuc);
+		if (inc==p.rep_q-1) { //Push back only once after required number of observations
+			poly2.push_back(polys[i]);
+		}
+	}
+	polys=poly2;
+}
+
+
+void ProcessPVsRef (run_params p, int j, vector<double> freqs, vector<char> nuc, char cons, vector<int> counts, int N, vector<poly>& polys) {
+	double prob=-(p.min_qual+0.)/10.;
+	prob=pow(10,prob);
+	for (int i=0;i<3;i++) { //Cycle through non-consensus alleles
+		double x=freqs[i];
+		int inc=0;
+		poly y;
+		y.locus=j;
+		y.cons=cons;
+		y.nuc=nuc[i];
+		if (x>p.q_cut) { //Frequency threshold
+			if (p.gmaf==1||x<1-p.q_cut) { //gmaf=1 calls fixation events relative to the reference sequence
+				inc=1;
+				if (counts[i]<p.n_min) { //Absolute nucleotide count threshold
+					inc=0;
+				} else {
+					double pr=0;
+					for (int k=counts[i];k<=N;k++) {
+						pr=pr+gsl_ran_binomial_pdf(k,prob,N);
+					}
+					if (pr>p.qp_cut) { //Probability threshold
+						inc=0;
+					}
+				}
+			}
+		}
+		if (inc==1) {
+			polys.push_back(y);
+			if (p.verb==1) {
+				cout << "Polymorphism " << y.locus << " " << y.cons << " " << y.nuc << " " << x << "\n";
+			}
+		}
+	}
+}
+
+
 
 void CallPolymorphisms (run_params p, rseq refseq, vector<nuc> ref_counts, vector<poly>& polys) {
 	if (p.verb==1) {
@@ -137,6 +287,7 @@ void CallPolymorphisms (run_params p, rseq refseq, vector<nuc> ref_counts, vecto
 			double fC=(ref_counts[i].nC[j]+0.)/(ref_counts[i].nN[j]+0.);
 			double fG=(ref_counts[i].nG[j]+0.)/(ref_counts[i].nN[j]+0.);
 			double fT=(ref_counts[i].nT[j]+0.)/(ref_counts[i].nN[j]+0.);
+			char cons=consensus[j];
 			if (consensus[j]=='A') {
 				vector<double> freqs;
 				vector<char> nuc;
@@ -150,7 +301,7 @@ void CallPolymorphisms (run_params p, rseq refseq, vector<nuc> ref_counts, vecto
 				counts.push_back(ref_counts[i].nC[j]);
 				counts.push_back(ref_counts[i].nG[j]);
 				counts.push_back(ref_counts[i].nT[j]);
-				ProcessP(p,j,freqs,nuc,counts,ref_counts[i].nN[j],polys);
+				ProcessP(p,j,freqs,nuc,cons,counts,ref_counts[i].nN[j],polys);
 			}
 			if (consensus[j]=='C') {
 				vector<double> freqs;
@@ -165,7 +316,7 @@ void CallPolymorphisms (run_params p, rseq refseq, vector<nuc> ref_counts, vecto
 				counts.push_back(ref_counts[i].nA[j]);
 				counts.push_back(ref_counts[i].nG[j]);
 				counts.push_back(ref_counts[i].nT[j]);
-				ProcessP(p,j,freqs,nuc,counts,ref_counts[i].nN[j],polys);
+				ProcessP(p,j,freqs,nuc,cons,counts,ref_counts[i].nN[j],polys);
 			}
 			if (consensus[j]=='G') {
 				vector<double> freqs;
@@ -180,7 +331,7 @@ void CallPolymorphisms (run_params p, rseq refseq, vector<nuc> ref_counts, vecto
 				counts.push_back(ref_counts[i].nA[j]);
 				counts.push_back(ref_counts[i].nC[j]);
 				counts.push_back(ref_counts[i].nT[j]);
-				ProcessP(p,j,freqs,nuc,counts,ref_counts[i].nN[j],polys);
+				ProcessP(p,j,freqs,nuc,cons,counts,ref_counts[i].nN[j],polys);
 			}
 			if (consensus[j]=='T') {
 				vector<double> freqs;
@@ -195,32 +346,16 @@ void CallPolymorphisms (run_params p, rseq refseq, vector<nuc> ref_counts, vecto
 				counts.push_back(ref_counts[i].nA[j]);
 				counts.push_back(ref_counts[i].nC[j]);
 				counts.push_back(ref_counts[i].nG[j]);
-				ProcessP(p,j,freqs,nuc,counts,ref_counts[i].nN[j],polys);
+				ProcessP(p,j,freqs,nuc,cons,counts,ref_counts[i].nN[j],polys);
 			}
 		}
 	}
 	
 	//Delete duplicate polymorphisms
-	vector<poly> poly2;
-	vector<int> x;
-	vector<char> c;
-	for (int i=0;i<polys.size();i++) {
-		int inc=0;
-		for (int j=0;j<x.size();j++) { //Previously recorded polymorphisms
-			if (polys[i].locus==x[j]&&polys[i].nuc==c[j]) {
-				inc++;
-			}
-		}
-		x.push_back(polys[i].locus);
-		c.push_back(polys[i].nuc);
-		if (inc==p.rep_q-1) { //Push back only once after required number of observations
-			poly2.push_back(polys[i]);
-		}
-	}
-	polys=poly2;
+	DeleteDuplicatePolymporphisms(p,polys);
 }
 
-void ProcessP (run_params p, int j, vector<double> freqs, vector<char> nuc, vector<int> counts, int N, vector<poly>& polys) {
+void ProcessP (run_params p, int j, vector<double> freqs, vector<char> nuc, char cons, vector<int> counts, int N, vector<poly>& polys) {
 	double prob=-(p.min_qual+0.)/10.;
 	prob=pow(10,prob);
 	for (int i=0;i<3;i++) {
@@ -228,6 +363,7 @@ void ProcessP (run_params p, int j, vector<double> freqs, vector<char> nuc, vect
 		int inc=0;
 		poly y;
 		y.locus=j;
+		y.cons=cons;
 		y.nuc=nuc[i];
 		if (x>p.q_cut&&x<1-p.q_cut) { //Frequency threshold
 			inc=1;
@@ -246,7 +382,7 @@ void ProcessP (run_params p, int j, vector<double> freqs, vector<char> nuc, vect
 		if (inc==1) {
 			polys.push_back(y);
 			if (p.verb==1) {
-				cout << "Polymorphism " << y.locus << " " << y.nuc << " " << x << "\n";
+				cout << "Polymorphism " << y.locus << " " << y.cons << " " << y.nuc << " " << x << "\n";
 			}
 		}
 	}
@@ -263,9 +399,10 @@ void ConstructSLTrajs (run_params p, vector<poly> polys, vector<nuc> ref_counts,
 		sltraj.times=times;
 		sltraj.locus=polys[i].locus;
 		sltraj.nuc=polys[i].nuc;
+		sltraj.cons=polys[i].cons;
 		for (int j=0;j<ref_counts.size();j++) {
 			if (p.verb==1) {
-				cout << polys[i].locus << " " << polys[i].nuc << " " << j << " " << ref_counts[j].nA[polys[i].locus] << " " << ref_counts[j].nC[polys[i].locus] << " " << ref_counts[j].nG[polys[i].locus] << " " << ref_counts[j].nT[polys[i].locus] << " " << ref_counts[j].nN[polys[i].locus] << "\n";
+				cout << polys[i].locus << " " << polys[i].cons << " " << polys[i].nuc << " " << j << " " << ref_counts[j].nA[polys[i].locus] << " " << ref_counts[j].nC[polys[i].locus] << " " << ref_counts[j].nG[polys[i].locus] << " " << ref_counts[j].nT[polys[i].locus] << " " << ref_counts[j].nN[polys[i].locus] << "\n";
 			}
 			sltraj.nA.push_back(ref_counts[j].nA[polys[i].locus]);
 			sltraj.nC.push_back(ref_counts[j].nC[polys[i].locus]);
@@ -321,7 +458,7 @@ void SLTMeanFreqs (run_params p, vector<str>& sltrajs) {
 		sltrajs[i].mC=sltrajs[i].mC/N;
 		sltrajs[i].mG=sltrajs[i].mG/N;
 		sltrajs[i].mT=sltrajs[i].mT/N;
-		//cout << i << " " << sltrajs[i].mA << " " << sltrajs[i].mC << " " << sltrajs[i].mG << " " << sltrajs[i].mT << "\n";
+		cout << i << " " << sltrajs[i].mA << " " << sltrajs[i].mC << " " << sltrajs[i].mG << " " << sltrajs[i].mT << "\n";
 	}
 }
 
@@ -374,11 +511,12 @@ void FilterSLTrajs (run_params p, vector<str>& sltrajs) {
 
 void FilterSLTrajs2 (run_params p, vector<str>& sltrajs) {
 	if (p.verb==1) {
-		cout << "Filter trajectories by non-existence of polymorphism...\n";
+		cout << "Filter trajectories by frequency cutoff...\n";
 	}
 	vector<str> new_sltrajs;
 	for (int i=0;i<sltrajs.size();i++) {
 		if (sltrajs[i].inc==1) {
+		//	cout << "Check " << i << "\n";
 			str s;
 			for (int j=0;j<sltrajs[i].qA.size();j++) {
 				int inc=0;
@@ -407,6 +545,7 @@ void FilterSLTrajs2 (run_params p, vector<str>& sltrajs) {
 					s.inc=1;
 				}
 			}
+		//	cout << "Size " << s.qA.size() << "\n";
 			if (s.qA.size()>1) {
 				new_sltrajs.push_back(s);
 			} else {
@@ -447,7 +586,6 @@ void PotentialNonNeutrality (run_params p, double Csl_opt, vector<str>& sltrajs,
 		bic=(-2*L);
 		cout << "BIC " << bic << " ";
 		sltrajs[traj].BIC.push_back(bic);
-		
 		cout << "Constant selection ";
 		sel_model=sltrajs[traj].nuc;
 		L=OptimiseSLTraj(p.verb,p,5,traj,sel_model,tds,n_times,times,N,Csl_opt,sltrajs,fact_store,rgen);

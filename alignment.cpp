@@ -9,6 +9,7 @@ void AlignSequencesSam (run_params& p, int s_length, vector<char> qual, rseq ref
 	int q=0;
 	cout << "Length " << s_length << "\n";
 	string q0;
+	int xalq=0;
 	MinBaseQual(qual,q0); //Find code for minimum base quality
 	for (int i=0;i<s_length;i++) {
 		if (p.verb==1) {
@@ -35,11 +36,16 @@ void AlignSequencesSam (run_params& p, int s_length, vector<char> qual, rseq ref
 								RemoveSoftClipping(i,data);  //Remove remaining soft clipping
 								ProcessReadQual (i,p,qual,data); //Process data by individual nucleotide quality
 							}
+						} else if (data[i].alq==255) {
+							xalq++;
 						}
 					}
 				}
 			}
 		}
+	}
+	if (xalq>200) {
+		cout << "Warning: " << xalq << " sequences excluded due to unknown alignment quality\n";
 	}
 }
 

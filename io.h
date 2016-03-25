@@ -22,7 +22,7 @@ void InputJnData (int i, vector<joined>& t_read);
 void OutputVarFile (int i, rseq refseq, nuc r_count);
 void OutputSLTData (const char* filename, vector<str> sltrajs);
 void ImportSLTData (run_params p, vector<str>& sltrajs);
-void ImportSLTLoci (const char* filename, vector<int>& loci);
+void ImportSLTLoci (const char* filename, int& check, vector<int>& loci);
 void ImportTimeData (vector<int>& times);
 void InputHaplotypeData (run_params p, vector<int> polys, vector< vector<char> >& haps);
 void GenerateOutputFiles (run_params p, vector<int> polys, vector< vector<char> > haps, vector< vector< vector<mpoly> > > m_polys, vector< vector<mpoly> > c_m_polys, vector< vector<mtr> >& mltrajs);

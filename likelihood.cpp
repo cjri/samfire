@@ -4,11 +4,21 @@
 
 double DirichletMultiCalc (int N, double c, vector<int> obs, vector<double> inf, vector<double>& fact_store) {
 	double bin=0;
+//	cout << "C " << c << "\n";
+//	cout << "N " << N << "\n";
+//	cout << "Obs\n";
+//	 for (unsigned int i=0;i<obs.size();i++) {
+//	 cout << obs[i] << " ";
+//	 }
+//	 cout << "\n";
+//	 cout << "Inf\n";
 	 for (unsigned int i=0;i<inf.size();i++) {
 		 if (inf[i]<1e-20) {
 			 inf[i]=1e-20;
 		 }
+//		cout << inf[i] << " ";
 	 }
+//	 cout << "\n";
 
 	if (N>0) {
 		bin=fact_store[N];

@@ -20,10 +20,13 @@ void GetOptions (run_params& p, int argc, const char **argv) {
 	p.rep_q=1;
 	p.n_min=10;
 	p.specify_csl=0;
+	p.vs_ref=0;
+	p.gmaf=0;
 	p.pairs=0;
 	p.plines=3;
 	p.ddup=-1;
 	p.dq_cut=0.05;
+	p.no_sam=0;
 	p.hap_q_cut=0.01;
 	p.hap_n_min=10;
 	p.seed=(int) time(NULL);
@@ -62,9 +65,18 @@ void GetOptions (run_params& p, int argc, const char **argv) {
 		} else if (p_switch.compare("--qlib")==0) {
 			x++;
 			p.qlib=atoi(argv[x]);
+		} else if (p_switch.compare("--vsref")==0) {
+			x++;
+			p.vs_ref=atoi(argv[x]);
+		} else if (p_switch.compare("--gmaf")==0) {
+			x++;
+			p.gmaf=atoi(argv[x]);
 		} else if (p_switch.compare("--ddup")==0) {
 			x++;
 			p.ddup=atoi(argv[x]);
+		} else if (p_switch.compare("--nosam")==0) {
+			x++;
+			p.no_sam=atoi(argv[x]);
 		} else if (p_switch.compare("--readhap")==0) {
 			x++;
 			p.readhap=atoi(argv[x]);

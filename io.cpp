@@ -20,6 +20,7 @@ void GetRefSeq (ifstream& ref_file, rseq& refseq) {
 	}
 	ref_file >> rs;
 	refseq.seq=rs;
+	//cout << rs << "\n";
 	//cout << ref << "\n";
 	rsize=rs.size();
 	//cout << rsize << "\n";
@@ -191,6 +192,7 @@ void InputJnData (int i, vector<joined>& t_read) {
 	convert << i;
 	string temp=convert.str();
 	string name = "Joined"+temp+".out";
+	cout << "Read data from " << name << "\n";
 	jp_file.open(name.c_str());
 	int x;
 	string s;
@@ -230,7 +232,10 @@ void OutputSLTData (const char* filename, vector<str> sltrajs) {
 			tot++;
 		}
 	}
+	cout << "Total " << tot << "\n";
+	
 	for (int i=0;i<tot;i++) {
+		//cout << "T " << i << "\n";
 		min=1e9;
 		for (unsigned int j=0;j<sltrajs.size();j++) {
 			if (sltrajs[j].locus<min&&sltrajs[j].inc==1) {
@@ -238,8 +243,10 @@ void OutputSLTData (const char* filename, vector<str> sltrajs) {
 				m_index=j;
 			}
 		}
+
 		sltrajs[m_index].inc=0;
-		//Find initial consensus
+		
+/*		//Find initial consensus
 		char cons='A';
 		int max=sltrajs[m_index].nA[0];
 		if (sltrajs[m_index].nC[0]>sltrajs[m_index].nA[0]) {
@@ -252,7 +259,10 @@ void OutputSLTData (const char* filename, vector<str> sltrajs) {
 		}
 		if (sltrajs[m_index].nT[0]>max) {
 			cons='T';
-		}
+		}*/
+		char cons=sltrajs[m_index].cons;
+
+		
 		if (cons!=sltrajs[m_index].nuc) {
 			slt_file << sltrajs[m_index].locus << " " << cons << " " << sltrajs[m_index].nuc << " ";
 			slt_file <<sltrajs[m_index].times.size() << " ";
@@ -311,7 +321,7 @@ void ImportSLTData (run_params p, vector<str>& sltrajs) {
 	}
 }
 
-void ImportSLTLoci (const char* filename, vector<int>& loci) {
+void ImportSLTLoci (const char* filename, int& check, vector<int>& loci) {
 	//Read in a list of loci from a trajectory file
 	cout << "Import \n";
 	ifstream slt_file;
@@ -323,6 +333,10 @@ void ImportSLTLoci (const char* filename, vector<int>& loci) {
 		istringstream in(ss);
 		in >> loc;
 		loci.push_back(loc);
+	}
+	if (loci.size()==0) {
+		cout << "Error: No single-locus trajectories in input file\n";
+		check=1;
 	}
 }
 
