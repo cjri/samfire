@@ -121,7 +121,7 @@ void CallReadTypesConsecutive (run_params p, int max_l, int max_r_size, vector<i
 	for (int i=max_l;i>0;i--) {
 		for (int j=0;j<s-i+1;j++) {
 			vector <int> l_set;
-			if (polys[j+i-1] - polys[j]<max_r_size) {
+			if (polys[j+i-1]-polys[j]<max_r_size) {
 				for (int k=j;k<j+i;k++) {
 					l_set.push_back(k);
 				}
@@ -129,14 +129,15 @@ void CallReadTypesConsecutive (run_params p, int max_l, int max_r_size, vector<i
 					l_combs.push_back(l_set);
 				}
 			}
-			if (p.verb==1) {
-				for	(int j=0;j<l_set.size();j++) {
-					if (l_set.size()>0) {
-						cout << l_set[j] << " ";
-					}
-				}
-				cout << "\n";
+		}
+	}
+	if (p.verb==1) {
+		cout << "l_combs\n";
+		for	(int i=0;i<l_combs.size();i++) {
+			for (int j=0;j<l_combs[i].size();j++) {
+				cout << l_combs[i][j] << " ";
 			}
+			cout << "\n";
 		}
 	}
 }
@@ -225,7 +226,7 @@ void CallMNPs2 (run_params p, vector< vector<int> >& l_combs, vector <vector<cha
 	//Output of dataset
 	if (p.verb==1) {
 		for (int j=0;j<m_pol.size();j++) {
-			//cout << j << " " << m_polys[i][j].size() << "\n";
+			cout << j << " " << m_pol[j].size() << "\n";
 			for (int k=0;k<m_pol[j].size();k++) {
 				for (int l=0;l<m_pol[j][k].vars.size();l++) {
 					cout << m_pol[j][k].vars[l];
@@ -243,6 +244,7 @@ void FindMaxLoc(int& max_loc, vector<vector< vector<int> > > all_l_combs) {
 			for (int k=0;k<all_l_combs[i][j].size();k++) {
 				if (all_l_combs[i][j][k]>max_loc) {
 					max_loc=all_l_combs[i][j][k];
+					cout << "Max_loc " << max_loc << "\n";
 				}
 			}
 		}
@@ -250,24 +252,38 @@ void FindMaxLoc(int& max_loc, vector<vector< vector<int> > > all_l_combs) {
 }
 
 void ConstructLocVec (run_params p, int max_loc, int max_l_store, vector<vector< vector<int> > > all_l_combs, vector< vector<int> >& l_vec) {
+	/*cout << "Check all_l_combs\n";
+	for (int i=0;i<all_l_combs.size();i++) {
+		for (int j=0;j<all_l_combs[i].size();j++) {
+			for (int k=0;k<all_l_combs[i][j].size();k++) {
+				cout << all_l_combs[i][j][k] << " ";
+			}
+			cout << "\n";
+		}
+	}*/
+	
+	
 	for (int ml=max_l_store;ml>0;ml--) {
+		//cout << "ML " << ml << " " << "\n";
 		for (int index=0;index<max_loc+1;index++) {
+			//cout << "Index " << index << "\n";
 			int found=0;
 			for	(int i=0;i<all_l_combs.size();i++) {
 				if (found==0) {
 					for (int j=0;j<all_l_combs[i].size();j++){
 						if (all_l_combs[i][j].size()==ml&&all_l_combs[i][j][0]==index) {
+							//cout << "Match " << i << " " << j << " to size " << ml << " first " << index << "\n";
 							if (l_vec.size()>0) {
-								int m=l_vec.size();
-								if (l_vec[m-1][0]!=index) {
-									l_vec.push_back(all_l_combs[i][j]);
-									found=1;
-									break;
-								}
+								//cout << "Size OK\n";
+								l_vec.push_back(all_l_combs[i][j]);
+								found=1;
+								//cout << "Found 1\n";
+								break;
 							} else {
 								l_vec.push_back(all_l_combs[i][j]);
 								found=1;
-								break;
+								//cout << "Found 2\n";
+							break;
 							}
 						}
 					}
@@ -276,6 +292,7 @@ void ConstructLocVec (run_params p, int max_loc, int max_l_store, vector<vector<
 		}
 	}
 	if (p.verb==1) {
+		cout << "Loc_vec\n";
 		for (int i=0;i<l_vec.size();i++) {
 			for (int j=0;j<l_vec[i].size();j++) {
 				cout << l_vec[i][j] << " ";
@@ -326,7 +343,7 @@ void FilterMNPs (run_params p, vector< vector< vector<mpoly> > > m_polys, vector
 			vector<mpoly> mp;
 			int tot=0;
 			for (int k=0;k<m_polys[i][j].size();k++) { //Loop within read type
-				//cout << i << " " << j << " " << k << " " << m_polys[i][j][k].count << "\n";
+				cout << i << " " << j << " " << k << " " << m_polys[i][j][k].count << "\n";
 				tot=tot+m_polys[i][j][k].count;
 			}
 			for (int k=0;k<m_polys[i][j].size();k++) { //Loop within read type
