@@ -1,5 +1,5 @@
 CC	      = g++
-CC_FLAGS        = -g3 -O3 -Wall -I  /usr/local/include/gsl/
+CC_FLAGS        = -g3 -O3 -Wall -I  /usr/local/include/gsl/ -mmacosx-version-min=10.11
 LD_FLAGS	= -L/usr/local/lib -lgsl -lgslcblas -lcblas -lm
 SAM		= process_sam.o utilities_sam.o alignment.o matchpairs.o call_snps.o likelihood.o optimisation.o io.o call_mnps.o make_fullhaps.o ddups.o findld.o
 

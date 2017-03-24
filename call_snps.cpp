@@ -49,6 +49,50 @@ void SetupRefCounts (rseq refseq, vector<string> sam_files, vector<nuc>& ref_cou
 	}
 }
 
+void PerSequenceSNPs (run_params p, rseq refseq, vector<string> sam_files) {
+	for (int i=0;i<sam_files.size();i++) {
+		vector<joined> t_read;
+		InputJnData (i,t_read);
+		ofstream mut_file;
+		ostringstream convert;
+		convert << i;
+		string temp=convert.str();
+		string name = "Mutations"+temp+".out";
+		mut_file.open(name.c_str());
+		for (int j=0;j<t_read.size();j++) {
+			int index=0;
+			int a_index=0;
+			int mut=0;
+			if (p.pos==-1) {
+				for (int k=t_read[j].alpos-1;k<t_read[j].alpos+t_read[j].seq.size()-1;k++) {
+					if (t_read[j].seq[index]!='-'&&t_read[j].seq[index]!=refseq.seq[k]) {
+						mut++;
+					}
+					index++;
+				}
+				mut_file << index << " " << mut << "\n";
+			} else {
+				if (t_read[j].alpos<=p.pos-1&&t_read[j].alpos+t_read[j].seq.size()>=p.pos-1) {
+					char all='-';
+					for (int k=t_read[j].alpos-1;k<t_read[j].alpos+t_read[j].seq.size()-1;k++) {
+						if (k==p.pos-1) {
+							all=t_read[j].seq[index];
+						}
+						if (t_read[j].seq[index]!='-'&&t_read[j].seq[index]!=refseq.seq[k]) {
+							mut++;
+						}
+						index++;
+						if (t_read[j].seq[index]!='-') {
+							a_index++;
+						}
+					}
+					mut_file << a_index << " " << all << " " << mut << "\n";
+				}
+			}
+		}
+	}
+}
+
 
 void CountNucs (run_params p, rseq refseq, vector<joined> t_read, nuc& r_count) {
 	if (p.verb==1) {
@@ -437,6 +481,10 @@ void SLTFreqs (run_params p, vector<str>& sltrajs) {
 			sltrajs[i].qG.push_back(q);
 			q=(sltrajs[i].nT[j]+0.)/(sltrajs[i].nN[j]+0.);
 			sltrajs[i].qT.push_back(q);
+			/*if (p.verb==1) {
+				cout << sltrajs[i].nA[j] << " " << sltrajs[i].nC[j] << " " << sltrajs[i].nG[j] << " " << sltrajs[i].nT[j] << "\n";
+				cout << sltrajs[i].qA[j] << " " << sltrajs[i].qC[j] << " " << sltrajs[i].qG[j] << " " << sltrajs[i].qT[j] << "\n";
+			}*/
 		}
 	}
 }
@@ -445,20 +493,35 @@ void SLTMeanFreqs (run_params p, vector<str>& sltrajs) {
 	if (p.verb==1) {
 		cout << "Calculating mean polymorphism frequencies over time...\n";
 	}
+	//cout << "Cutoff " << p.dep_cut << "\n";
 	for (int i=0;i<sltrajs.size();i++) {
 		double N=0;
+		sltrajs[i].mA=0;
+		sltrajs[i].mC=0;
+		sltrajs[i].mG=0;
+		sltrajs[i].mT=0;
 		for (int j=0;j<sltrajs[i].qA.size();j++) {
-			sltrajs[i].mA=sltrajs[i].mA+sltrajs[i].nA[j];
-			sltrajs[i].mC=sltrajs[i].mC+sltrajs[i].nC[j];
-			sltrajs[i].mG=sltrajs[i].mG+sltrajs[i].nG[j];
-			sltrajs[i].mT=sltrajs[i].mT+sltrajs[i].nT[j];
-			N=N+sltrajs[i].nN[j];
+			if (sltrajs[i].nN[j]>p.dep_cut) {
+				sltrajs[i].mA=sltrajs[i].mA+sltrajs[i].nA[j];
+				sltrajs[i].mC=sltrajs[i].mC+sltrajs[i].nC[j];
+				sltrajs[i].mG=sltrajs[i].mG+sltrajs[i].nG[j];
+				sltrajs[i].mT=sltrajs[i].mT+sltrajs[i].nT[j];
+				N=N+sltrajs[i].nN[j];
+				if (p.verb==1) {
+					cout << i << " " << j << " " << sltrajs[i].nA[j] << " " << sltrajs[i].nC[j] << " " << sltrajs[i].nG[j] << " " << sltrajs[i].nT[j] << " " << sltrajs[i].nN[j] << "\n";
+				}
+
+			}
 		}
-		sltrajs[i].mA=sltrajs[i].mA/N;
-		sltrajs[i].mC=sltrajs[i].mC/N;
-		sltrajs[i].mG=sltrajs[i].mG/N;
-		sltrajs[i].mT=sltrajs[i].mT/N;
-		cout << i << " " << sltrajs[i].mA << " " << sltrajs[i].mC << " " << sltrajs[i].mG << " " << sltrajs[i].mT << "\n";
+		if (N>1) {
+			sltrajs[i].mA=sltrajs[i].mA/N;
+			sltrajs[i].mC=sltrajs[i].mC/N;
+			sltrajs[i].mG=sltrajs[i].mG/N;
+			sltrajs[i].mT=sltrajs[i].mT/N;
+		}
+		if (p.verb==1) {
+			cout << i << " " << sltrajs[i].mA << " " << sltrajs[i].mC << " " << sltrajs[i].mG << " " << sltrajs[i].mT << "\n";
+		}
 	}
 }
 
@@ -519,30 +582,35 @@ void FilterSLTrajs2 (run_params p, vector<str>& sltrajs) {
 		//	cout << "Check " << i << "\n";
 			str s;
 			for (int j=0;j<sltrajs[i].qA.size();j++) {
-				int inc=0;
-				if (sltrajs[i].qA[j]>p.q_cut&&sltrajs[i].qA[j]<(1-p.q_cut)) {
-					inc=1;
-				}
-				if (sltrajs[i].qC[j]>p.q_cut&&sltrajs[i].qC[j]<(1-p.q_cut)) {
-					inc=1;
-				}
-				if (sltrajs[i].qG[j]>p.q_cut&&sltrajs[i].qG[j]<(1-p.q_cut)) {
-					inc=1;
-				}
-				if (sltrajs[i].qT[j]>p.q_cut&&sltrajs[i].qT[j]<(1-p.q_cut)) {
-					inc=1;
-				}
-				if (inc==1) {
-					s.qA.push_back(sltrajs[i].qA[j]);
-					s.qC.push_back(sltrajs[i].qC[j]);
-					s.qG.push_back(sltrajs[i].qG[j]);
-					s.qT.push_back(sltrajs[i].qT[j]);
-					s.nA.push_back(sltrajs[i].nA[j]);
-					s.nC.push_back(sltrajs[i].nC[j]);
-					s.nG.push_back(sltrajs[i].nG[j]);
-					s.nT.push_back(sltrajs[i].nT[j]);
-					s.nN.push_back(sltrajs[i].nN[j]);
-					s.inc=1;
+				if (sltrajs[i].nN[j]>p.dep_cut) {
+					int inc=0;
+					if (sltrajs[i].qA[j]>p.q_cut&&sltrajs[i].qA[j]<(1-p.q_cut)) {
+						inc=1;
+					}
+					if (sltrajs[i].qC[j]>p.q_cut&&sltrajs[i].qC[j]<(1-p.q_cut)) {
+						inc=1;
+					}
+					if (sltrajs[i].qG[j]>p.q_cut&&sltrajs[i].qG[j]<(1-p.q_cut)) {
+						inc=1;
+					}
+					if (sltrajs[i].qT[j]>p.q_cut&&sltrajs[i].qT[j]<(1-p.q_cut)) {
+						inc=1;
+					}
+					//if (p.verb==1) {
+					//	cout << sltrajs[i].qA[j] << " " << sltrajs[i].qC[j] << " " << sltrajs[i].qG[j] << " " << sltrajs[i].qT[j] << "\n";
+					//}
+					if (inc==1) {
+						s.qA.push_back(sltrajs[i].qA[j]);
+						s.qC.push_back(sltrajs[i].qC[j]);
+						s.qG.push_back(sltrajs[i].qG[j]);
+						s.qT.push_back(sltrajs[i].qT[j]);
+						s.nA.push_back(sltrajs[i].nA[j]);
+						s.nC.push_back(sltrajs[i].nC[j]);
+						s.nG.push_back(sltrajs[i].nG[j]);
+						s.nT.push_back(sltrajs[i].nT[j]);
+						s.nN.push_back(sltrajs[i].nN[j]);
+						s.inc=1;
+					}
 				}
 			}
 		//	cout << "Size " << s.qA.size() << "\n";

@@ -474,40 +474,42 @@ void FilterMLFreq (run_params p, vector< vector<int> >& times, vector< vector<mt
 	vector< vector<int> > new_times;
 	//Get sequence depths
 	for (int i=0;i<mltrajs.size();i++) {
-		vector<int> depths;
-		GetDepths (i,depths,mltrajs);
-		//Filter out times at which there are no polymorphic haplotypes
-		vector<int> included;
-		for (int k=0;k<mltrajs[i][0].n.size();k++) {
-			int inc=0;
-			for (int j=0;j<mltrajs[i].size();j++) { //Cycle through partial haplotypes
-				if ((mltrajs[i][j].n[k]+0.)/(depths[k]+0.)>p.hap_q_cut&&(mltrajs[i][j].n[k]+0.)/(depths[k]+0.)<(1-p.hap_q_cut)) {
-					inc=1;
+		if (mltrajs[i].size()>0) {
+			vector<int> depths;
+			GetDepths (i,depths,mltrajs);
+			//Filter out times at which there are no polymorphic haplotypes
+			vector<int> included;
+			for (int k=0;k<mltrajs[i][0].n.size();k++) {
+				int inc=0;
+				for (int j=0;j<mltrajs[i].size();j++) { //Cycle through partial haplotypes
+					if ((mltrajs[i][j].n[k]+0.)/(depths[k]+0.)>p.hap_q_cut&&(mltrajs[i][j].n[k]+0.)/(depths[k]+0.)<(1-p.hap_q_cut)) {
+						inc=1;
+					}
 				}
+				included.push_back(inc);
 			}
-			included.push_back(inc);
-		}
 
-		vector<mtr> mt;
-		vector<int> t;
-		for (int k=0;k<times[i].size();k++) {
-			if (included[k]==1) {
-				t.push_back(times[i][k]);
-			}
-		}
-		
-		for (int j=0;j<mltrajs[i].size();j++) {
-			mtr m;
-			for (int k=0;k<mltrajs[i][j].n.size();k++) {
+			vector<mtr> mt;
+			vector<int> t;
+			for (int k=0;k<times[i].size();k++) {
 				if (included[k]==1) {
-					m.n.push_back(mltrajs[i][j].n[k]);
+					t.push_back(times[i][k]);
 				}
 			}
-			mt.push_back(m);
-		}
-		if (mt[0].n.size()>1) {
-			new_mltrajs.push_back(mt);
-			new_times.push_back(t);
+		
+			for (int j=0;j<mltrajs[i].size();j++) {
+				mtr m;
+				for (int k=0;k<mltrajs[i][j].n.size();k++) {
+					if (included[k]==1) {
+						m.n.push_back(mltrajs[i][j].n[k]);
+					}
+				}
+				mt.push_back(m);
+			}
+			if (mt[0].n.size()>1) {
+				new_mltrajs.push_back(mt);
+				new_times.push_back(t);
+			}
 		}
 	}
 	mltrajs=new_mltrajs;

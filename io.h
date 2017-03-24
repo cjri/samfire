@@ -17,10 +17,14 @@ void ReadSamFile (run_params p, ifstream& sam_file, int& s_length, vector<rd>& d
 void BinDecomp (int i, vector<int>& v);
 void OutputAlign (int i, vector<rd> data);
 void OutAl (vector<rd> data, ofstream& al_file);
+void InputVariantData (vector<string> sam_files, vector< vector< vector<int> > >& all_nucs);
+void OutputParticularConsensus (string name2, string name3, vector<char> cons);
+void OutputGlobalConsensus (vector< vector< vector<int> > >& all_nucs);
+void GetVariantTotals (vector<string> sam_files, vector< vector<int> >& all_tots);
 void InputJoinedData (int n_times, vector< vector<joined> >& t_reads);
 void InputJnData (int i, vector<joined>& t_read);
 void OutputVarFile (int i, rseq refseq, nuc r_count);
-void OutputSLTData (const char* filename, vector<str> sltrajs);
+void OutputSLTData (run_params p, const char* filename, vector<str> sltrajs);
 void ImportSLTData (run_params p, vector<str>& sltrajs);
 void ImportSLTLoci (const char* filename, int& check, vector<int>& loci);
 void ImportTimeData (vector<int>& times);

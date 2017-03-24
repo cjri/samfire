@@ -8,6 +8,7 @@ void MatchPairs (run_params p, int ireq, vector<rd>& data) { //ireq flags whethe
 	cout << "Identifying paired end reads...\n";
 	int n_pairs=0;
 	for (unsigned int i=0;i<data.size();i++) {
+//		cout << data[i].paircode << "\n";
 //		cout << "i " << i << "\n";
 		if (ireq==0||data[i].inc!=0) {
 			int j_lim=data.size();

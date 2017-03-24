@@ -163,6 +163,120 @@ void OutAl (vector<rd> data, ofstream& al_file) {
 	}
 }
 
+void InputVariantData (vector<string> sam_files, vector< vector< vector<int> > >& all_nucs) {
+	for (int i=0;i<sam_files.size();i++) {
+		ifstream var_file;
+		ostringstream convert;
+		convert << i;
+		string temp=convert.str();
+		string name = "Variants"+temp+".out";
+		string name2 = "Consensus"+temp+".fa";
+		string name3 = ">Consensus_"+temp;
+		cout << name << "\n";
+		var_file.open(name.c_str());
+	
+		vector< vector<int> > nucs;
+		vector<char> cons;
+		for (int j=0;j<1000000000;j++) {
+			vector<int> ns;
+			int n;
+			char max='N';
+			if (!(var_file >> n)) break;
+			if (!(var_file >> n)) break;
+			ns.push_back(n);
+			if (n>0) {
+				max='A';
+			}
+			if (!(var_file >> n)) break;
+			ns.push_back(n);
+			if (n>ns[0]) {max='C';}
+			if (!(var_file >> n)) break;
+			ns.push_back(n);
+			if (n>ns[0]&&n>ns[1]) {
+				max='G';
+			}
+			if (!(var_file >> n)) break;
+			ns.push_back(n);
+			if (n>ns[0]&&n>ns[1]&&n>ns[2]) {
+				max='T';
+			}
+			if (!(var_file >> n)) break;
+			nucs.push_back(ns);
+			cons.push_back(max);
+		}
+		OutputParticularConsensus(name2,name3,cons);
+		all_nucs.push_back(nucs);
+	}
+}
+
+void OutputParticularConsensus (string name2, string name3, vector<char> cons) {
+	ofstream cons_file;
+	cons_file.open(name2.c_str());
+	cons_file << name3 << "\n";
+	for (int j=0;j<cons.size();j++) {
+		cons_file << cons[j];
+	}
+	cons_file << "\n";
+}
+
+void OutputGlobalConsensus (vector< vector< vector<int> > >& all_nucs) {
+	cout << "Output Global Consensus\n";
+	cout << all_nucs[0].size() << "\n";
+	ofstream cons_file;
+	cons_file.open("Consensus_all.fa");
+	cons_file << ">Consensus_all\n";
+	vector<char> total_cons;
+	for (int i=0;i<all_nucs[0].size();i++) {
+		vector<int> ns;
+		for (int j=0;j<4;j++) {
+			int tot=0;
+			for (int k=0;k<all_nucs.size();k++) {
+				tot=tot+all_nucs[k][i][j];
+			}
+			ns.push_back(tot);
+		}
+		char max='N';
+		if (ns[0]>0) {
+			max='A';
+		}
+		if (ns[1]>ns[0]) {
+			max='C';
+		}
+		if (ns[2]>ns[0]&&ns[2]>ns[0]) {
+			max='G';
+		}
+		if (ns[3]>ns[2]&&ns[3]>ns[1]&&ns[3]>ns[0]) {
+			max='T';
+		}
+		cons_file << max;
+	}
+	cons_file << "\n";
+}
+
+void GetVariantTotals (vector<string> sam_files, vector< vector<int> >& all_tots) {
+	for (int i=0;i<sam_files.size();i++) {
+		ifstream var_file;
+		ostringstream convert;
+		convert << i;
+		string temp=convert.str();
+		string name = "Variants"+temp+".out";
+		cout << name << "\n";
+		var_file.open(name.c_str());
+		vector<int> ns;
+		for (int j=0;j<1000000000;j++) {
+			int n;
+			if (!(var_file >> n)) break;
+			if (!(var_file >> n)) break;
+			if (!(var_file >> n)) break;
+			if (!(var_file >> n)) break;
+			if (!(var_file >> n)) break;
+			if (!(var_file >> n)) break;
+			ns.push_back(n);
+		}
+		all_tots.push_back(ns);
+	}
+}
+
 void InputJoinedData (int n_times, vector< vector<joined> >& t_reads) {
 	for (int i=0;i<n_times;i++) {
 		ifstream jp_file;
@@ -221,7 +335,7 @@ void OutputVarFile (int i, rseq refseq, nuc r_count) {
 }
 
 
-void OutputSLTData (const char* filename, vector<str> sltrajs) {
+void OutputSLTData (run_params p, const char* filename, vector<str> sltrajs) {
 	ofstream slt_file;
 	slt_file.open(filename);
 	int min=1e9;
@@ -233,6 +347,8 @@ void OutputSLTData (const char* filename, vector<str> sltrajs) {
 		}
 	}
 	cout << "Total " << tot << "\n";
+	
+	vector<int> seen;
 	
 	for (int i=0;i<tot;i++) {
 		//cout << "T " << i << "\n";
@@ -263,18 +379,30 @@ void OutputSLTData (const char* filename, vector<str> sltrajs) {
 		char cons=sltrajs[m_index].cons;
 
 		
+		
 		if (cons!=sltrajs[m_index].nuc) {
-			slt_file << sltrajs[m_index].locus << " " << cons << " " << sltrajs[m_index].nuc << " ";
-			slt_file <<sltrajs[m_index].times.size() << " ";
-			for (unsigned int j=0;j<sltrajs[m_index].times.size();j++) {
-				slt_file << sltrajs[m_index].times[j] << " ";
-				slt_file << sltrajs[m_index].nA[j] << " ";
-				slt_file << sltrajs[m_index].nC[j] << " ";
-				slt_file << sltrajs[m_index].nG[j] << " ";
-				slt_file << sltrajs[m_index].nT[j] << " ";
-				slt_file << sltrajs[m_index].nN[j] << " ";
+			int s=0;
+			if (p.uniq==1) {
+				for (int j=0;j<seen.size();j++) {
+					if (seen[j]==sltrajs[m_index].locus) {
+						s=1;
+					}
+				}
 			}
-			slt_file << "\n";
+			if (s==0) {
+				slt_file << sltrajs[m_index].locus << " " << cons << " " << sltrajs[m_index].nuc << " ";
+				slt_file <<sltrajs[m_index].times.size() << " ";
+				for (unsigned int j=0;j<sltrajs[m_index].times.size();j++) {
+					slt_file << sltrajs[m_index].times[j] << " ";
+					slt_file << sltrajs[m_index].nA[j] << " ";
+					slt_file << sltrajs[m_index].nC[j] << " ";
+					slt_file << sltrajs[m_index].nG[j] << " ";
+					slt_file << sltrajs[m_index].nT[j] << " ";
+					slt_file << sltrajs[m_index].nN[j] << " ";
+				}
+				slt_file << "\n";
+				seen.push_back(sltrajs[m_index].locus);
+			}
 		}
 	}
 }
@@ -312,7 +440,7 @@ void ImportSLTData (run_params p, vector<str>& sltrajs) {
 		s.inc=1;
 		sltrajs.push_back(s);
 		if (p.verb==1) {
-			cout << s.locus << " " << s.nuc << " " << s.times.size() << " ";
+			cout << s.locus << " " << s.cons << " " << s.nuc << " " << s.times.size() << " ";
 			for (int j=0;j<s.times.size();j++) {
 				cout << s.times[j] << " " << s.nA[j] << " " << s.nC[j] << " " << s.nG[j] << " " << s.nT[j] << " " << s.nN[j] << " ";
 			}

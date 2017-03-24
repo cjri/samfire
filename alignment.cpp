@@ -13,22 +13,24 @@ void AlignSequencesSam (run_params& p, int s_length, vector<char> qual, rseq ref
 	MinBaseQual(qual,q0); //Find code for minimum base quality
 	for (int i=0;i<s_length;i++) {
 		if (p.verb==1) {
-			cout << "Sequence " << i << "\n";
+			cout << "Sequences " << i << "\n";
 			cout << data[i].seq << "\n";
 			cout << data[i].qual << "\n";
 		}
 		data[i].inc=0;
 		if (data[i].del==0) { //Not previously deleted
+			//cout << data[i].ref << " " << refseq.name << "\n";
 			if (data[i].ref==refseq.name) {
 				ReadCigar(i,data); //Read CIGAR string
 				q=findqual(p,i,p.min_qual,p.max_qual,qual,data);  //Assess read by median nucleotide quality
 				//cout << "Median qual " << q << "\n";
 				if (q>=p.min_qual) {  //Minimum sequence quality test
-					//cout << "Align qual " << data[i].alq << "\n";
+					//cout << "Align qual " << data[i].alq << " " << p.ali_qual << "\n";
 					if (data[i].alq>=p.ali_qual) { //Minumum alignment quality
 						if (p.ali_inc==1||(p.ali_inc==0&&data[i].alq!=255)) { //Minumum alignment quality
 							//cout << data[i].alpos << " " << refseq.seq.size()-p.min_rlen << "\n";
 							if (data[i].alpos<refseq.seq.size()-p.min_rlen) { //Sequence must be aligned to have an overlap of at least the minimum number of alleles reported by a read; this weeds out misaligned sequences at the end of the reference sequence.
+								//cout << "Included\n";
 								data[i].inc=1;
 								RemoveInitialSoftClipping(i,data);  //Remove initial soft clipping
 								FixDeletions(i,q0,data);  //Include blank data for deletions

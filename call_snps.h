@@ -20,6 +20,7 @@ struct cutoff {
 //Call SNPs
 void CountNucleotides (run_params p, rseq refseq, vector<string> sam_files, vector< vector<joined> > t_reads, vector<nuc>& ref_counts);
 void SetupRefCounts (rseq refseq, vector<string> sam_files, vector<nuc>& ref_counts);
+void PerSequenceSNPs (run_params p, rseq refseq, vector<string> sam_files);
 void CountNucs (run_params p, rseq refseq, vector<joined> t_read, nuc& r_count);
 void SetupRCount (rseq refseq, nuc& r_count);
 

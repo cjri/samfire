@@ -160,9 +160,78 @@ int main(int argc, const char **argv) {
 			p.out_file="Single_locus_trajectories.out";
 		}
 		
-		OutputSLTData(p.out_file.c_str(),sltrajs);
+		OutputSLTData(p,p.out_file.c_str(),sltrajs);
 		
 		return 0;
+		
+	} else if (method.compare("consensus")==0) {
+		
+		vector<string> sam_files;
+		if (p.no_sam>0) {
+			for (int i=0;i<p.no_sam;i++) {
+				string s;
+				sam_files.push_back(s);
+			}
+		} else {
+			ImportSamFileNames(p,sam_files);
+		}
+		
+		//Import variant data
+		vector< vector< vector<int> > > all_nucs;
+		InputVariantData(sam_files,all_nucs);
+		
+		cout << all_nucs[0].size() << "\n";
+
+		
+		//Output consensus sequence data
+		OutputGlobalConsensus(all_nucs);
+		
+	} else if (method.compare("ef_depth")==0) {
+		
+		vector<string> sam_files;
+		if (p.no_sam>0) {
+			for (int i=0;i<p.no_sam;i++) {
+				string s;
+				sam_files.push_back(s);
+			}
+		} else {
+			ImportSamFileNames(p,sam_files);
+		}
+
+		//Read in Variant data
+		vector< vector<int> > all_tots;
+		GetVariantTotals(sam_files,all_tots);
+
+		//Convert depth to effective depth
+		ifstream csl_file;
+		double c;
+		csl_file.open("Csl.out");
+		csl_file >> c;
+		vector< vector<int> > all_etots;
+		for (int i=0;i<all_tots.size();i++) {
+			vector<int> et;
+			for (int j=0;j<all_tots[i].size();j++) {
+				double cd=(all_tots[i][j]*(1+c))/(all_tots[i][j]+c);
+				int cdi=floor(cd);
+				et.push_back(cdi);
+			}
+			cout << i << " " << et.size() << "\n";
+			all_etots.push_back(et);
+		}
+		
+		
+		for (int i=0;i<sam_files.size();i++) {
+			ofstream dep_file;
+			ostringstream convert;
+			convert << i;
+			string temp=convert.str();
+			string name = "Depths"+temp+".out";
+			dep_file.open(name.c_str());
+			for (int j=0;j<all_tots[i].size();j++) {
+				dep_file << j << " " << all_tots[i][j] << " " <<  all_etots[i][j] << "\n";
+			}
+		}
+	
 		
 	} else if (method.compare("sl_noise")==0) {
 
@@ -175,9 +244,8 @@ int main(int argc, const char **argv) {
 
 		SLTFreqs(p,sltrajs); //Convert observations to frequencies
 
-		
 		//Remove trajectories that move by more than a cutoff amount per day
-		cout << "Size " << sltrajs[0].times.size() << "\n";
+		cout << "Number of recorded time points " << sltrajs[0].times.size() << "\n";
 		
 		if (sltrajs[0].times.size()>1) {
 			FilterSLTrajs(p,sltrajs);
@@ -234,7 +302,7 @@ int main(int argc, const char **argv) {
 		if (p.get_out==0) {
 			p.out_file="Single_locus_trajectories_sl.out";
 		}
-		OutputSLTData(p.out_file.c_str(),sltrajs);
+		OutputSLTData(p,p.out_file.c_str(),sltrajs);
 
 		return 0;
 		
@@ -298,6 +366,7 @@ int main(int argc, const char **argv) {
 		
 		//Order polymorphisms by loci spanned
 		
+		cout << "Find Max Loc\n";
 		int max_loc=0;
 		FindMaxLoc(max_loc,all_l_combs);
 		vector< vector<int> > l_vec;
@@ -305,7 +374,6 @@ int main(int argc, const char **argv) {
 		ConstructMPoly (l_vec,all_l_combs,m_polys);
 
 		//Construct full haplotypes
-		
 		//Filter data at time-resolved level: minimum frequency and #occurrences within each dataset
 		vector< vector< vector<mpoly> > > m_polys_f;
 		FilterMNPs(p,m_polys,m_polys_f);
@@ -339,7 +407,7 @@ int main(int argc, const char **argv) {
 		return 0;
 		
 	} else if (method.compare("ml_noise")==0) {
-
+		
 		//Read multi-locus haplotype data.
 		vector< vector<mtr> > mltrajs;
 		vector< vector<int> > times;
@@ -350,9 +418,12 @@ int main(int argc, const char **argv) {
 		}
 		//Should include an alternative arrangement in which data is read from a single set of haplotypes i.e. within a single dataset...
 		
+		//cout << "Size " << times.size() << "\n";
+
+		
 		FilterMLFreq (p,times,mltrajs); //Edit out non-polymorphic time-points
 		
-//		cout << "Size " << times.size() << "\n";
+		cout << "Size " << times.size() << "\n";
 		
 		FilterMLFreq2 (p,times,mltrajs); //Edit out haplotypes below the noise threshold
 		//Calculate mean multi-locus observations over time

@@ -45,9 +45,11 @@ struct run_params {
 	int n_min; //Minimum number of variant alleles to call polymorphism
 	int rep_q; //Number of time points at which a SNP needs to be observed in order for it to be recorded
 	double dq_cut; //Cutoff change in allele frequency per day for potential neutrality
+	int dep_cut; //Cutoff overall read depth to call polymorphism
 	double seed; //Random seed
 	int skip;
 	int no_sam; //Skip reading in list of .sam files in calling single-locus variants
+	int pos; //Default position for mutational scan
 	int det; //Flag to use deterministic model of single-locus evolution; no mutation or drift
 	double mu; //Mutation rate for single-locus evolution model
 	double hap_q_cut;  //Minimum freuqency within a dataset at which to include a partial haplotype
@@ -64,6 +66,7 @@ struct run_params {
 	int full_rep; //Flag to give Multi_locus_haplotypes output
 	int vs_ref; //Call against the given reference sequence, rather than against the consensus in the first time point at each position
 	int gmaf; //Call polymorphisms that are fixed against the reference sequence
+	int uniq; //Only print one trajectory per locus
 	int verb; //Verbose output
 };
 

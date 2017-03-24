@@ -120,20 +120,22 @@ void OptimiseCsl (run_params p, double& Csl_opt, vector<str> sltrajs, vector<dou
 				}
 				for (int j=0;j<sltrajs[i].qA.size();j++) {
 					vector<int> obs;
-					if (inc[0]==1) {
-						obs.push_back(sltrajs[i].nA[j]);
-					}
-					if (inc[1]==1) {
-						obs.push_back(sltrajs[i].nC[j]);
-					}
-					if (inc[2]==1) {
-						obs.push_back(sltrajs[i].nG[j]);
-					}
-					if (inc[3]==1) {
-						obs.push_back(sltrajs[i].nT[j]);
-					}
 					int N=sltrajs[i].nN[j];
-					logL=logL+DirichletMultiCalc(N,C,obs,inf,fact_store);
+					if (N>=p.dep_cut) {
+						if (inc[0]==1) {
+							obs.push_back(sltrajs[i].nA[j]);
+						}
+						if (inc[1]==1) {
+							obs.push_back(sltrajs[i].nC[j]);
+						}
+						if (inc[2]==1) {
+							obs.push_back(sltrajs[i].nG[j]);
+						}
+						if (inc[3]==1) {
+							obs.push_back(sltrajs[i].nT[j]);
+						}
+						logL=logL+DirichletMultiCalc(N,C,obs,inf,fact_store);
+					}
 				}
 			}
 		}

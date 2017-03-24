@@ -26,12 +26,14 @@ void GetOptions (run_params& p, int argc, const char **argv) {
 	p.plines=3;
 	p.ddup=-1;
 	p.dq_cut=0.05;
+	p.dep_cut=1;
 	p.no_sam=0;
 	p.hap_q_cut=0.01;
 	p.hap_n_min=10;
 	p.seed=(int) time(NULL);
 	p.skip=0;
 	p.det=0;
+	p.pos=-1;
 	p.hap_index=0;
 	p.conservative=0;
 	p.readhap=0;
@@ -40,6 +42,7 @@ void GetOptions (run_params& p, int argc, const char **argv) {
 	p.out_file="";
 	p.get_in=0;
 	p.get_out=0;
+	p.uniq=0;
 	p.hap_file="../Haps1.dat";
 	p.full_haps=0;
 	p.full_rep=1;
@@ -62,6 +65,9 @@ void GetOptions (run_params& p, int argc, const char **argv) {
 		} else if (p_switch.compare("--ali_inc")==0) {
 			x++;
 			p.ali_inc=atoi(argv[x]);
+		} else if (p_switch.compare("--pos")==0) {
+			x++;
+			p.pos=atoi(argv[x]);
 		} else if (p_switch.compare("--qlib")==0) {
 			x++;
 			p.qlib=atoi(argv[x]);
@@ -116,6 +122,9 @@ void GetOptions (run_params& p, int argc, const char **argv) {
 		} else if (p_switch.compare("--qp_cut")==0) {
 			x++;
 			p.qp_cut=atof(argv[x]);
+		} else if (p_switch.compare("--uniq")==0) {
+			x++;
+			p.uniq=atoi(argv[x]);
 		} else if (p_switch.compare("--seed")==0) {
 			x++;
 			p.seed=atoi(argv[x]);
@@ -125,6 +134,9 @@ void GetOptions (run_params& p, int argc, const char **argv) {
 		} else if (p_switch.compare("--dq_cut")==0) {
 			x++;
 			p.dq_cut=atof(argv[x]);
+		} else if (p_switch.compare("--dep_cut")==0) {
+			x++;
+			p.dep_cut=atoi(argv[x]);
 		} else if (p_switch.compare("--hap_q_cut")==0) {
 			x++;
 			p.hap_q_cut=atof(argv[x]);
@@ -348,7 +360,9 @@ void PrintInstructions (int a) {
 	cout << "\n";
 	cout << "./process_sam filter        [options] : Performs QC on .sam format data.\n";
 	cout << "./process_sam sl_traj       [options] : Identifies single-locus polymorphisms in data.\n";
+	cout << "./process_sam consensus     [options] : Calculates consensus sequences from variant data.\n";
 	cout << "./process_sam sl_noise	     [options] : Calculates noise parameter for identified single-locus polymorphisms.\n";
+	cout << "./process_sam ef_depth	     [options] : Calculates effective depth of sequencing for data files.\n";
 	cout << "./process_sam sl_neutrality [options] : Identifies single-locus polymorphisms that evolve in a potentially non-neutral manner\n";
 	cout << "./process_sam call_ml       [options] : Calls multi-locus polymorphisms\n";
 	cout << "./process_sam ml_noise      [options] : Calculats noise parameter for identified multi-locus polymorphisms\n";
