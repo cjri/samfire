@@ -18,9 +18,13 @@ void MapSequenceToSNPLoci (run_params p, int n_times, vector<int> polys, vector<
 
 void MapSeqToSNPLoci (run_params p, int n_times, vector<int> polys, vector<joined> t_read, vector <vector<char> >& m_vars);
 void CallReadTypesConsecutive (run_params p, int max_l, int max_r_size, vector<int> polys, vector< vector<int> >& l_combs);
+void CallReadTypesGaps (run_params p, int max_l, int max_r_size, vector<int> polys, vector< vector<int> >& l_combs);
+
 void CallMNPs2 (run_params p, vector< vector<int> >& l_combs, vector <vector<char> > m_vars, vector< vector<mpoly> >& m_pol);
 void FindMaxLoc(int& max_loc, vector<vector< vector<int> > > all_l_combs);
 void ConstructLocVec (run_params p, int max_loc, int max_l_store, vector<vector< vector<int> > > all_l_combs, vector< vector<int> >& l_vec);
+void ConstructLocVecGap (run_params p, vector<vector< vector<int> > > all_l_combs, vector< vector<int> >& l_vec);
+
 void ConstructMPoly (vector< vector<int> >& l_vec, vector<vector< vector<int> > > all_l_combs, vector< vector< vector<mpoly> > >& m_polys);
 void MakeAssignedList (vector <vector <vector<char> > > t_m_vars, vector< vector<int> >& done);
 void FilterMNPs (run_params p, vector< vector< vector<mpoly> > > m_polys, vector< vector< vector<mpoly> > >& m_polys_f);

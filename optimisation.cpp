@@ -47,7 +47,6 @@ void FindLogFact(vector<double>& fact_store,int N){
 
 
 void OptimiseCsl (run_params p, double& Csl_opt, vector<str> sltrajs, vector<double> fact_store, gsl_rng *rgen) {
-	cout << "Find optimal value of C_sl\n";
 	Csl_opt=100;
 	double C=100;
 	double logL=-1e10;
@@ -619,7 +618,7 @@ void SetInitialSelection (run_params p, int tds, char sel_model, int n_times, ve
 
 void SigsHapSigs (int tds, char sel_model, int n_times, vector<double> sigs, vector< vector<double> >& hapsigs) {
 	char nucs[] = {'A','C','G','T'};
-	for (int h=0;h<=4;h++) { //Haplotypes A C G T
+	for (int h=0;h<4;h++) { //Haplotypes A C G T
 		vector<double> hs;
 		if (sel_model==nucs[h]) {
 			if (tds==1) {

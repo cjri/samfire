@@ -27,14 +27,21 @@
 using namespace std;
 
 struct run_params {
-	string ref;
+	string ref; //Reference sequence
+	string ref1;  //References for contamination check
+	string ref2;
+	string jn1;  //Joined.out file names for contamination check
+	string jn2;
 	int plines;	  //Number of elements in string defining paired-end data in specific .sam file
 	int almethod; //Method of gathering sequence alignment data
 	int min_qual; //Minimum sequence quality
 	int max_qual; //Maximum sequence quality
 	int min_rlen; //Minimum number of alleles that must be contained in a single read
 	int ali_qual; //Minimum alignment quality
+    int print_qual; //Print quality data
+    int print_ali; //Prints unjoined Aligned?.out files
 	int ali_inc; //Flag to include reads with uncertain alignment quality
+	int trim; //Amount to trim from each end of reads
 	int sorted; //Flag to indicate that .sam files have been sorted by their first column
 	int qlib;  //Base quality indicators
 	int pairs; //Include paired end reads
@@ -44,10 +51,12 @@ struct run_params {
 	double qp_cut; //Probability required to identify polymorphism
 	int n_min; //Minimum number of variant alleles to call polymorphism
 	int rep_q; //Number of time points at which a SNP needs to be observed in order for it to be recorded
+	int first; //Flag to require first time-point to be polymorphic when calling SNPs
 	double dq_cut; //Cutoff change in allele frequency per day for potential neutrality
 	int dep_cut; //Cutoff overall read depth to call polymorphism
 	double seed; //Random seed
 	int skip;
+	int printnl; //In sl_neutrality, print trajectories which are not inferred to be under selection
 	int no_sam; //Skip reading in list of .sam files in calling single-locus variants
 	int pos; //Default position for mutational scan
 	int det; //Flag to use deterministic model of single-locus evolution; no mutation or drift
@@ -63,10 +72,32 @@ struct run_params {
 	string out_file; //File name for output
 	int get_out; //Flag to use read output file
 	int full_haps; //Flag to generate full haplotypes
+	int printx; //Flag to print X haplotypes in Multi_locus_haplotypes
 	int full_rep; //Flag to give Multi_locus_haplotypes output
 	int vs_ref; //Call against the given reference sequence, rather than against the consensus in the first time point at each position
 	int gmaf; //Call polymorphisms that are fixed against the reference sequence
 	int uniq; //Only print one trajectory per locus
+	int multi_gap; //Option in multilocus calling to call full haplotypes with gaps, rather than consecutive loci
+	int maxgap; //Maximum number of gaps to allow in multi_gap code
+	int translate; //Translate consensus nucleotide sequences to amino acids.  May require start codon to be specified
+	int trans_start; //Start position for translation of consensus sequence.
+	int get_variants; //Option for consensus sequence - generates mask of mutational types for each variant file conditional on the start position for translation
+	int repair_consensus; //Option to repair consensus sequences which contain Ns - ambiguous nucleotides
+	int sns_distances; //Option to calculate distances between variant files in terms of S and NS variants
+	
+	//Contamination
+	int decon; //Option to decontaminate Joined files in contamination code
+	
+	int calc_len; //Print stats for read lengths
+	int calc_qual; //Print stats for base qualities
+	int calc_pi; //Print diversity statistics for datasets
+	int sns; //Calculate diversity for four-fold synonymous and non-synonymous sites
+	int calc_var_comp; //Calcuation composition of variation
+	int calc_ham_cons; //Calculation of Hamming distances between consensus sequences
+	int calc_ham_var; //Calculation of Hamming distances between variant data
+	int calc_sum_var; //Calculation of the sum of variant frequencies
+	int bootstrap; //Calculate bootstrap samples of Variant files for statistics
+	int len; //Minimum length of protein to report in reading frames calculation
 	int verb; //Verbose output
 };
 
@@ -94,7 +125,7 @@ struct rd {
 	string qual;
 	string revqual;
 	string paircode;
-	
+	vector<int> rmqual;
 };
 
 struct alldat {
@@ -104,6 +135,7 @@ struct alldat {
 
 struct poly {
 	int locus;
+	int first;
 	char nuc;
 	char cons;
 };
@@ -111,6 +143,15 @@ struct poly {
 struct mpoly {
 	vector<char> vars;
 	int count;
+};
+
+struct npoly {
+	int cons;
+	int locus;
+	int cod;
+	vector<int> count;
+	vector<int> ccount;
+	vector<int> tot;
 };
 
 struct str {  //Single-locus trajectory through time
@@ -146,6 +187,11 @@ struct mtr { //Multi-locus trajectory through time
 struct joined {
 	int alpos;
 	string seq;
+};
+
+struct ql {
+        int alpos;
+        vector<int> seq;
 };
 
 struct pr {

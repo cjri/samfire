@@ -142,6 +142,55 @@ void CallReadTypesConsecutive (run_params p, int max_l, int max_r_size, vector<i
 	}
 }
 
+void CallReadTypesGaps (run_params p, int max_l, int max_r_size, vector<int> polys, vector< vector<int> >& l_combs) {
+	int s=polys.size();
+	if (p.verb==1) {
+		cout << "Potential sets of loci spanned by reads: here we consider the full set plus a certain number of indels\n";
+	}
+	vector <int> l_set;
+	for (int i=0;i<s;i++) {
+		l_set.push_back(i);
+	}
+	l_combs.push_back(l_set);
+
+	for (int i1=0;i1<s;i1++){
+		l_set.clear();
+		for (int i2=0;i2<s;i2++) {
+			if (i2!=i1) {
+				l_set.push_back(i2);
+			}
+		}
+		l_combs.push_back(l_set);
+	}
+	if (p.maxgap>=2) {
+		for (int i1=0;i1<s;i1++) {
+			for (int i2=0;i2<s;i2++) {
+				if (i1!=i2) {
+					l_set.clear();
+					for (int i=0;i<s;i++) {
+						if (i!=i1&&i!=i2) {
+							l_set.push_back(i);
+						}
+					}
+					l_combs.push_back(l_set);
+				}
+			}
+		}
+
+	}
+	
+	if (p.verb==1) {
+		cout << "l_combs\n";
+		for	(int i=0;i<l_combs.size();i++) {
+			for (int j=0;j<l_combs[i].size();j++) {
+				cout << l_combs[i][j] << " ";
+			}
+			cout << "\n";
+		}
+	}
+}
+
+
 
 void CallMNPs2 (run_params p, vector< vector<int> >& l_combs, vector <vector<char> > m_vars, vector< vector<mpoly> >& m_pol) {
 	cout << "Calling multi-locus polymorphisms...\n";
@@ -262,7 +311,6 @@ void ConstructLocVec (run_params p, int max_loc, int max_l_store, vector<vector<
 		}
 	}*/
 	
-	
 	for (int ml=max_l_store;ml>0;ml--) {
 		//cout << "ML " << ml << " " << "\n";
 		for (int index=0;index<max_loc+1;index++) {
@@ -300,8 +348,35 @@ void ConstructLocVec (run_params p, int max_loc, int max_l_store, vector<vector<
 			cout << "\n";
 		}
 	}
-
 }
+
+
+void ConstructLocVecGap (run_params p, vector<vector< vector<int> > > all_l_combs, vector< vector<int> >& l_vec) {
+	for	(int i=0;i<all_l_combs.size();i++) {
+		for (int j=0;j<all_l_combs[i].size();j++){
+			int inc=0;
+			for (int k=0;k<l_vec.size();k++) {
+				if (all_l_combs[i][j]==l_vec[k]) {
+					inc=1;
+				}
+			}
+			if (inc==0) {
+				l_vec.push_back(all_l_combs[i][j]);
+			}
+		}
+	}
+	if (p.verb==1) {
+		cout << "Loc_vec\n";
+		for (int i=0;i<l_vec.size();i++) {
+			for (int j=0;j<l_vec[i].size();j++) {
+				cout << l_vec[i][j] << " ";
+			}
+			cout << "\n";
+		}
+	}
+}
+
+		
 
 void ConstructMPoly (vector< vector<int> >& l_vec, vector<vector< vector<int> > > all_l_combs, vector< vector< vector<mpoly> > >& m_polys) {
 	vector< vector< vector<mpoly> > > new_m_polys;

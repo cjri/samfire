@@ -25,7 +25,8 @@ void CountNucs (run_params p, rseq refseq, vector<joined> t_read, nuc& r_count);
 void SetupRCount (rseq refseq, nuc& r_count);
 
 void CallPolymorphisms (run_params p, rseq refseq, vector<nuc> ref_counts, vector<poly>& polys);
-void ProcessP (run_params p, int j, vector<double> freqs, vector<char> nuc, char cons, vector<int> counts, int N, vector<poly>& polys);
+void ProcessP (run_params p, int j, int t, vector<double> freqs, vector<char> nuc, char cons, vector<int> counts, int N, vector<poly>& polys);
+void SpreadFirst(vector<poly>& polys);
 void ConstructSLTrajs (run_params p, vector<poly> polys, vector<nuc> ref_counts, vector<str>& sltrajs);
 void SLTFreqs (run_params p, vector<str>& sltrajs);
 void SLTMeanFreqs (run_params p, vector<str>& sltrajs);

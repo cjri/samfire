@@ -32,11 +32,16 @@ void AlignSequencesSam (run_params& p, int s_length, vector<char> qual, rseq ref
 							if (data[i].alpos<refseq.seq.size()-p.min_rlen) { //Sequence must be aligned to have an overlap of at least the minimum number of alleles reported by a read; this weeds out misaligned sequences at the end of the reference sequence.
 								//cout << "Included\n";
 								data[i].inc=1;
-								RemoveInitialSoftClipping(i,data);  //Remove initial soft clipping
+								int isc=0;
+								int fsc=0;
+								RemoveInitialSoftClipping(i,isc,data);  //Remove initial soft clipping
 								FixDeletions(i,q0,data);  //Include blank data for deletions
 								FixInsertions(i,data);  //Remove insertions
+								if (p.trim>0) {
+									CountEndSoftClipping(i,fsc,data); //Count soft clipping at end of read - required for trim;
+								}
 								RemoveSoftClipping(i,data);  //Remove remaining soft clipping
-								ProcessReadQual (i,p,qual,data); //Process data by individual nucleotide quality
+								ProcessReadQual (i,isc,fsc,p,qual,data); //Trim data + Process by individual nucleotide quality.
 							}
 						} else if (data[i].alq==255) {
 							xalq++;
@@ -124,6 +129,8 @@ int findqual (run_params p, int i, int min_qual, int max_qual, vector<char> qual
 	string q=data[i].qual;
 	string s=data[i].seq;
 	string c=data[i].cig_string;
+	data[i].rmqual.push_back(0);
+	data[i].rmqual.push_back(0);
 	//	cout << s << "\n";
 	//	cout << q << "\n";
 	vector<int> qvec;
@@ -131,8 +138,17 @@ int findqual (run_params p, int i, int min_qual, int max_qual, vector<char> qual
 		int done=0;
 		for (int j=0;j<=max_qual;j++) {
 			if (q[i]==qual[j]) {
-				qvec.push_back(j);
-				done=1;
+				//cout << i << " " << q.size() << " " << q[i] << " " << qual[j] << "\n";
+				if (p.qlib==3) {
+					if (j==0) {j=1;}
+					int qq=floor(10.*log10(j));
+					//cout << q[i] << " "  << i << " " << q.size() << " " << qual[j] << " " << j << " " << qq << "\n";
+					qvec.push_back(qq);
+					done=1;
+				} else {
+					qvec.push_back(j);
+					done=1;
+				}
 				break;
 			}
 		}
@@ -153,14 +169,14 @@ int findqual (run_params p, int i, int min_qual, int max_qual, vector<char> qual
 			//Reduce sequence by removing nucleotides from the end of the read
 			for (int a=1;a<qvec.size()-p.min_rlen;a++) {
 				median=GetMedian(a,0,qvec);
-				if (median==min_qual) {
+				if (median>=min_qual) {
 					s1=a;
 					break;
 				}
 			}
 			for (int a=1;a<qvec.size()-p.min_rlen;a++) {
 				median=GetMedian(0,a,qvec);
-				if (median==min_qual) {
+				if (median>=min_qual) {
 					s2=a;
 					break;
 				}
@@ -177,6 +193,7 @@ int findqual (run_params p, int i, int min_qual, int max_qual, vector<char> qual
 				data[i].seq=s;
 				data[i].cig_string=c;
 				qo=min_qual;
+				data[i].rmqual[0]=s1;
 			} else if (s2<999&&s2<s1) {
 				q=q.substr(0,qs-s2+1);
 				s=s.substr(0,qs-s2+1);
@@ -187,6 +204,7 @@ int findqual (run_params p, int i, int min_qual, int max_qual, vector<char> qual
 				data[i].seq=s;
 				data[i].cig_string=c;
 				qo=min_qual;
+				data[i].rmqual[1]=s2;
 			} else {
 				qo=-1;
 			}
@@ -227,7 +245,7 @@ int GetMedian (int a, int b, vector<int> qvec) {
 }
 
 
-void RemoveInitialSoftClipping (int i, vector<rd>& data) {
+void RemoveInitialSoftClipping (int i, int& isc, vector<rd>& data) {
 	if (data[i].cig_string.compare(0,1,"S")==0) {
 		string s;
 		string q;
@@ -236,6 +254,7 @@ void RemoveInitialSoftClipping (int i, vector<rd>& data) {
 		while (data[i].cig_string.compare(j,1,"S")==0) {
 			j++;
 		}
+		isc=j;
 		data[i].seq=data[i].seq.substr(j,data[i].seq.length()-j);
 		data[i].qual=data[i].qual.substr(j,data[i].qual.length()-j);
 		data[i].cig_string=data[i].cig_string.substr(j,data[i].cig_string.length()-j);
@@ -263,6 +282,16 @@ void FixInsertions (int i, vector<rd>& data) {
 	}
 }
 
+void CountEndSoftClipping (int i, int& fsc, vector<rd>& data) {
+	if (data[i].cig_string.size()>0) {
+		int j=1;
+		while (data[i].cig_string.compare(data[i].cig_string.size()-j,1,"S")==0) {
+			j++;
+		};
+		fsc=j-1;
+	}
+}
+
 void RemoveSoftClipping (int i, vector<rd>& data) {
 	for (int j=0;j<data[i].cig_string.length();j++) {
 		if (data[i].cig_string.compare(j,1,"S")==0) {
@@ -276,7 +305,29 @@ void RemoveSoftClipping (int i, vector<rd>& data) {
 }
 
 //Process short read, removing alleles that do not have sufficient nucleotide quality
-void ProcessReadQual (int i, run_params p, vector<char> qual, vector<rd>& data) {
+void ProcessReadQual (int i, int isc, int fsc, run_params p, vector<char> qual, vector<rd>& data) {
+
+	//Remove ends by trimming
+	if (p.trim>0) {
+		if (data[i].seq.size()<(2*p.trim)) {
+			data[i].inc=0;
+		} else {
+			int trim=p.trim-data[i].rmqual[0];
+			trim=trim-isc;
+			if (trim>0) {
+				data[i].seq.erase(0,trim);
+				data[i].alpos=data[i].alpos+trim;
+			}
+			//Find final soft clipping
+			trim=p.trim-data[i].rmqual[1];
+			trim=trim-fsc;
+			if (trim>0) {
+				data[i].seq.erase(data[i].seq.end()-p.trim,data[i].seq.end());
+			}
+		}
+	}
+	
+	//Count nucleotides of sufficient quality
 	int incl=0;
 	for (int k=0;k<data[i].seq.size();k++) {
 		int keep=0;

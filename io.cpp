@@ -163,7 +163,25 @@ void OutAl (vector<rd> data, ofstream& al_file) {
 	}
 }
 
-void InputVariantData (vector<string> sam_files, vector< vector< vector<int> > >& all_nucs) {
+void InputConsensusSequences (vector<string> sam_files, vector<string>& consensus) {
+	for (int i=0;i<sam_files.size();i++) {
+		ifstream var_file;
+		ostringstream convert;
+		convert << i;
+		string temp=convert.str();
+		string name = "Consensus"+temp+".fa";
+		var_file.open(name.c_str());
+		string c1;
+		string c2;
+		var_file >> c1;
+		var_file >> c2;
+		consensus.push_back(c2);
+	}
+}
+
+
+void InputVariantData (int output_consensus, vector<string> sam_files, vector< vector< vector<int> > >& all_nucs, vector< vector<char> >& all_cons) {
+	cout << "Reading in variant files...\n";
 	for (int i=0;i<sam_files.size();i++) {
 		ifstream var_file;
 		ostringstream convert;
@@ -172,7 +190,7 @@ void InputVariantData (vector<string> sam_files, vector< vector< vector<int> > >
 		string name = "Variants"+temp+".out";
 		string name2 = "Consensus"+temp+".fa";
 		string name3 = ">Consensus_"+temp;
-		cout << name << "\n";
+		//cout << name << "\n";
 		var_file.open(name.c_str());
 	
 		vector< vector<int> > nucs;
@@ -201,11 +219,34 @@ void InputVariantData (vector<string> sam_files, vector< vector< vector<int> > >
 				max='T';
 			}
 			if (!(var_file >> n)) break;
+			ns.push_back(n);
 			nucs.push_back(ns);
 			cons.push_back(max);
 		}
-		OutputParticularConsensus(name2,name3,cons);
+		if (output_consensus==1) {
+			OutputParticularConsensus(name2,name3,cons);
+		}
 		all_nucs.push_back(nucs);
+		all_cons.push_back(cons);
+	}
+}
+
+void InputVariantTypes (vector< vector<int> >& var) {
+	ifstream type_file;
+	type_file.open("Variant_types.dat");
+	int n;
+	for (int i=0;i<1000000;i++) {
+		vector<int> v;
+		if (!(type_file >> n)) break;
+		if (!(type_file >> n)) break;
+		v.push_back(n);
+		if (!(type_file >> n)) break;
+		v.push_back(n);
+		if (!(type_file >> n)) break;
+		v.push_back(n);
+		if (!(type_file >> n)) break;
+		v.push_back(n);
+		var.push_back(v);
 	}
 }
 
@@ -219,7 +260,58 @@ void OutputParticularConsensus (string name2, string name3, vector<char> cons) {
 	cons_file << "\n";
 }
 
-void OutputGlobalConsensus (vector< vector< vector<int> > >& all_nucs) {
+void OutputCodingConsensii (run_params p, vector<string>& sam_files, vector< vector <char> >& all_cons) {
+	for (int i=0;i<sam_files.size();i++) {
+		ifstream var_file;
+		ostringstream convert;
+		convert << i;
+		string temp=convert.str();
+		string name2 = "Consensus"+temp+"_cod.fa";
+		string name3 = ">Consensus_"+temp;
+		ofstream cons_file;
+		cons_file.open(name2.c_str());
+		cons_file << name3 << "\n";
+		for (int j=p.trans_start;j<all_cons[i].size();j++) {
+			cons_file << all_cons[i][j];
+		}
+		cons_file << "\n";
+		cons_file.close();
+	}
+}
+
+void OutputParticularAAConsensus (string name2, string name3, vector<char> aaseq) {
+	ofstream cons_file;
+	cons_file.open(name2.c_str());
+	cons_file << name3 << "\n";
+	for (int j=0;j<aaseq.size();j++) {
+		cons_file << aaseq[j];
+	}
+	cons_file << "\n";
+}
+
+void OutputVarMask (string name4, int pre, int total, vector< vector<int> > s_types) {
+	ofstream mask_file;
+	mask_file.open(name4.c_str());
+	//Variants before the start of the coding region - give these -1.
+	pre=pre-1;
+	for (int i=0;i<pre;i++) {
+		mask_file << "-1 -1 -1 -1\n";
+	}
+	for (int i=0;i<s_types.size();i++) {
+		for (int j=0;j<s_types[i].size();j++) {
+			mask_file << s_types[i][j] << "  ";
+		}
+		mask_file << "\n";
+	}
+	int remain=total-pre-s_types.size();
+	for (int i=0;i<remain;i++) {
+		mask_file << "-1 -1 -1 -1\n";
+	}
+	mask_file.close();
+}
+
+
+void OutputGlobalConsensus (vector< vector< vector<int> > >& all_nucs, vector<char>& global_cons) {
 	cout << "Output Global Consensus\n";
 	cout << all_nucs[0].size() << "\n";
 	ofstream cons_file;
@@ -249,6 +341,7 @@ void OutputGlobalConsensus (vector< vector< vector<int> > >& all_nucs) {
 			max='T';
 		}
 		cons_file << max;
+		global_cons.push_back(max);
 	}
 	cons_file << "\n";
 }
@@ -320,6 +413,66 @@ void InputJnData (int i, vector<joined>& t_read) {
 	}
 }
 
+void InputJnDataGeneral (string name, vector<joined>& t_read) {
+	ifstream jp_file;
+	jp_file.open(name.c_str());
+	int x;
+	string s;
+	for (int j=0;j<=100000000;j++) {
+		joined jn;
+		if (!(jp_file >> x)) break;
+		if (!(jp_file >> s)) break;
+		jn.alpos=x;
+		jn.seq=s;
+		t_read.push_back(jn);
+	}
+}
+
+void InputQualData (run_params p, int i, vector<ql>& q_read, vector<char> qual) {
+	ifstream jp_file;
+	ostringstream convert;
+	convert << i;
+	string temp=convert.str();
+	string name = "Quality"+temp+".out";
+	cout << "Read data from " << name << "\n";
+	jp_file.open(name.c_str());
+	int x;
+	string s;
+	
+	for (int j=0;j<=100000000;j++) {
+		ql q;
+		if (!(jp_file >> x)) break;
+		if (!(jp_file >> s)) break;
+		q.alpos=x;
+		for (int k=0;k<s.size();k++) {
+			for (int l=0;l<qual.size();l++) {
+				if (s[k]==qual[l]) {
+					q.seq.push_back(l);
+					break;
+				}
+			}
+		}
+		q_read.push_back(q);
+	}
+	//int max=0;
+	if (p.qlib==3) {
+		for (int i=0;i<q_read.size();i++) {
+			for (int j=0;j<q_read[i].seq.size();j++) {
+				if (q_read[i].seq[j]>0&&q_read[i].seq[j]<93) {
+					q_read[i].seq[j]=floor(10.*log10(q_read[i].seq[j]));
+					/*if (q_read[i].seq[j]>max) {
+					 max=q_read[i].seq[j];
+					 cout << "Max qual " << max << "\n";
+					 }*/
+				} else {
+					q_read[i].seq[j]=0;
+				}
+			}
+		}
+	}
+}
+
+
 
 void OutputVarFile (int i, rseq refseq, nuc r_count) {
 	ostringstream convert;
@@ -328,21 +481,24 @@ void OutputVarFile (int i, rseq refseq, nuc r_count) {
 	string name = "Variants"+temp+".out";
 	ofstream sl_file;
 	sl_file.open(name.c_str());
-	for (int j=0;j<refseq.size;j++) {
+	for (int j=1;j<=refseq.size;j++) {
 		sl_file << j << " " << r_count.nA[j] << " " << r_count.nC[j] << " " << r_count.nG[j] << " " << r_count.nT[j] << " " << r_count.nN[j] << "\n";
 	}
 	sl_file.close();
 }
 
 
-void OutputSLTData (run_params p, const char* filename, vector<str> sltrajs) {
+void OutputSLTData (run_params p, int sel, const char* filename, vector<str> sltrajs) {
+	if (sel!=0&&sel!=1) {
+		cout << "Error in call of OutputSLTData: Value must be 0 or 1\n";
+	}
 	ofstream slt_file;
 	slt_file.open(filename);
 	int min=1e9;
 	int m_index=-1;
 	int tot=0;
 	for (unsigned int i=0;i<sltrajs.size();i++) {
-		if (sltrajs[i].inc==1) {
+		if (sltrajs[i].inc==sel) {
 			tot++;
 		}
 	}
@@ -354,31 +510,14 @@ void OutputSLTData (run_params p, const char* filename, vector<str> sltrajs) {
 		//cout << "T " << i << "\n";
 		min=1e9;
 		for (unsigned int j=0;j<sltrajs.size();j++) {
-			if (sltrajs[j].locus<min&&sltrajs[j].inc==1) {
+			if (sltrajs[j].locus<min&&sltrajs[j].inc==sel) {
 				min=sltrajs[j].locus;
 				m_index=j;
 			}
 		}
 
-		sltrajs[m_index].inc=0;
-		
-/*		//Find initial consensus
-		char cons='A';
-		int max=sltrajs[m_index].nA[0];
-		if (sltrajs[m_index].nC[0]>sltrajs[m_index].nA[0]) {
-			cons='C';
-			max=sltrajs[m_index].nC[0];
-		}
-		if (sltrajs[m_index].nG[0]>max) {
-			cons='G';
-			max=sltrajs[m_index].nG[0];
-		}
-		if (sltrajs[m_index].nT[0]>max) {
-			cons='T';
-		}*/
+		sltrajs[m_index].inc=1-sel;
 		char cons=sltrajs[m_index].cons;
-
-		
 		
 		if (cons!=sltrajs[m_index].nuc) {
 			int s=0;
@@ -744,7 +883,7 @@ void GenerateOutputFiles (run_params p, vector<int> polys, vector< vector<char> 
 						haps_file << " ";
 					}
 					if (p.full_rep==1) {
-						ah_file << " ";
+						ah_file << " " << times.size() << " ";
 					}
 
 					//Find number of matching haplotypes with time
@@ -814,18 +953,19 @@ void GenerateOutputFiles (run_params p, vector<int> polys, vector< vector<char> 
 				haps_file << "X ";
 			}
 			if (p.full_rep==1) {
-				vector<int> loci;
-				for (unsigned int l=0;l<c_m_polys[i][0].vars.size();l++) {
-					if (c_m_polys[i][0].vars[l]!='-') {
-						loci.push_back(l);
-						//ah_file << l << " ";
+				if (p.printx==1) {
+					vector<int> loci;
+					for (unsigned int l=0;l<c_m_polys[i][0].vars.size();l++) {
+						if (c_m_polys[i][0].vars[l]!='-') {
+							loci.push_back(l);
+						}
 					}
+					ah_file << loci.size() << " ";
+					for (int q=0;q<loci.size();q++) {
+						ah_file << polys[loci[q]] << " ";
+					}
+					ah_file << "X ";
 				}
-				ah_file << loci.size() << " ";
-				for (int q=0;q<loci.size();q++) {
-					ah_file << polys[loci[q]] << " ";
-				}
-				ah_file << "X ";
 			}
 			int t_index=0;
 			for (unsigned int k=0;k<x_vect.size();k++) {
@@ -833,16 +973,20 @@ void GenerateOutputFiles (run_params p, vector<int> polys, vector< vector<char> 
 					haps_file << x_vect[k] << " ";
 				}
 				if (p.full_rep==1) {
-					ah_file << times[t_index] << " ";
-					ah_file << x_vect[k] << " ";
-					t_index++;
+					if (p.printx==1) {
+						ah_file << times[t_index] << " ";
+						ah_file << x_vect[k] << " ";
+						t_index++;
+					}
 				}
 			}
 			if (p.full_rep==0) {
 				haps_file << "\n";
 			}
 			if (p.full_rep==1) {
-				ah_file << "\n";
+				if (p.printx==1) {
+					ah_file << "\n";
+				}
 			}
 		}
 	}
@@ -1109,13 +1253,144 @@ void ReadMultiLocTrajs2 (run_params p, vector<str> sltrajs, vector<ld_info>& ld_
 				}
 			}
 		}
-		
-		
-
 	}
-	
-	
+}
+
+void PrintSeqLens (int i, vector<int> l_dist) {
+	ofstream stat_file;
+	ostringstream convert;
+	convert << i;
+	string temp=convert.str();
+	string name = "Seq_lengths"+temp+".out";
+	stat_file.open(name.c_str());
+	for (int k=0;k<l_dist.size();k++) {
+		stat_file << k << " " << l_dist[k] << "\n";
+	}
+	stat_file.close();
+}
+
+void PrintSeqQual (int i, vector<long> q_dist) {
+	ofstream stat_file;
+	ostringstream convert;
+	convert << i;
+	string temp=convert.str();
+	string name = "Base_quality"+temp+".out";
+	stat_file.open(name.c_str());
+	int max=0;
+	for (int j=0;j<q_dist.size();j++) {
+		if (q_dist[j]>0) {
+			max=j;
+		}
+	}
+	for (int j=0;j<=max;j++) {
+		stat_file << j << " " << q_dist[j] << "\n";
+	}
+	stat_file.close();
 }
 
 
-	
+void OutputDistancesCounts (vector< vector<double> >& distances, vector< vector<double> >& all_counts) {
+	ofstream dist_file;
+	ofstream counts_file;
+	dist_file.open("Distances.out");
+	counts_file.open("Counts.out");
+	for (int i=0;i<distances.size();i++) {
+		for (int j=0;j<distances[i].size();j++) {
+			dist_file << distances[i][j] << " ";
+		}
+		dist_file << "\n";
+	}
+	for (int i=0;i<all_counts.size();i++) {
+		for (int j=0;j<all_counts[i].size();j++) {
+			counts_file << all_counts[i][j] << " ";
+		}
+		counts_file << "\n";
+	}
+}
+
+void OutputDistancesCountsSNS (vector< vector<double> >& distances_n, vector< vector<double> >& distances_s, vector< vector<double> >& all_counts_n, vector< vector<double> >& all_counts_s) {
+	ofstream dist_n_file;
+	ofstream dist_s_file;
+	ofstream counts_n_file;
+	ofstream counts_s_file;
+	dist_n_file.open("Distances_n.out");
+	dist_s_file.open("Distances_s.out");
+	counts_n_file.open("Counts_n.out");
+	counts_s_file.open("Counts_s.out");
+	for (int i=0;i<distances_n.size();i++) {
+		for (int j=0;j<distances_n[i].size();j++) {
+			dist_n_file << distances_n[i][j] << " ";
+		}
+		dist_n_file << "\n";
+	}
+	for (int i=0;i<distances_s.size();i++) {
+		for (int j=0;j<distances_s[i].size();j++) {
+			dist_s_file << distances_s[i][j] << " ";
+		}
+		dist_s_file << "\n";
+	}
+	for (int i=0;i<all_counts_n.size();i++) {
+		for (int j=0;j<all_counts_n[i].size();j++) {
+			counts_n_file << all_counts_n[i][j] << " ";
+		}
+		counts_n_file << "\n";
+	}
+	for (int i=0;i<all_counts_s.size();i++) {
+		for (int j=0;j<all_counts_s[i].size();j++) {
+			counts_s_file << all_counts_s[i][j] << " ";
+		}
+		counts_s_file << "\n";
+	}
+}
+
+void ImportVariantMasks (vector<string>& sam_files, vector< vector< vector<int> > >& all_types) {
+	for (int i=0;i<sam_files.size();i++) {
+		ifstream var_file;
+		ostringstream convert;
+		convert << i;
+		string temp=convert.str();
+		string name = "Variant_mask"+temp+".out";
+		var_file.open(name.c_str());
+		vector< vector<int> > all_t;
+		for (int j=0;j<1000000000;j++) {
+			vector<int> type;
+			int t;
+			if (!(var_file >> t)) break;
+			type.push_back(t);
+			if (!(var_file >> t)) break;
+			type.push_back(t);
+			if (!(var_file >> t)) break;
+			type.push_back(t);
+			if (!(var_file >> t)) break;
+			type.push_back(t);
+			all_t.push_back(type);
+		}
+		all_types.push_back(all_t);
+	}
+}
+
+void OutputDeconJoined (run_params p, vector<joined> t_read1, vector<joined> t_read2, vector<int> filter1, vector<int> filter2) {
+	ofstream filt_file1;
+	ofstream filt_file2;
+	string ff1=p.jn1+".dec";
+	string ff2=p.jn2+".dec";
+	filt_file1.open(ff1.c_str());
+	filt_file2.open(ff2.c_str());
+	int index=0;
+	for (int i=0;i<t_read1.size();i++) {
+		if (filter1[index]==i) {
+			index++;
+		} else {
+			filt_file1 << t_read1[i].alpos << " " << t_read1[i].seq << "\n";
+		}
+	}
+	index=0;
+	for (int i=0;i<t_read2.size();i++) {
+		if (filter2[index]==i) {
+			index++;
+		} else {
+			filt_file2 << t_read2[i].alpos << " " << t_read2[i].seq << "\n";
+		}
+	}
+}
+
