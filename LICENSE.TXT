@@ -11,3 +11,4 @@ You should have received a copy of the GNU General Public License along with thi
 Version history
 v1.0 : 25/3/16
 v1.02 : 24/3/17 Includes effective depth calculation; code is now more resistant to bad inputs
+v1.06 : Uploaded 28/1/20 Includes new options for processing short read data.
