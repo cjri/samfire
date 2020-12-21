@@ -1,7 +1,7 @@
 CC	      = g++
 CC_FLAGS        = -g3 -O3 -Wall -I  /usr/local/include/gsl/ -mmacosx-version-min=10.11
-LD_FLAGS	= -L/usr/local/lib -lgsl -lgslcblas -lcblas -lm
-SAM		= process_sam.o utilities_sam.o alignment.o matchpairs.o call_snps.o likelihood.o optimisation.o io.o call_mnps.o make_fullhaps.o ddups.o findld.o
+LD_FLAGS	= -L/usr/local/lib -lgsl -lgslcblas -lm
+SAM		= process_sam.o utilities_sam.o alignment.o matchpairs.o call_snps.o likelihood.o optimisation.o io.o call_mnps.o make_fullhaps.o ddups.o findld.o stats.o data.o bioinf.o contamination.o ld_simple.o
 
 samfire: $(SAM)
 	$(CC) $(CC_FLAGS) $(SAM) -o samfire  $(LD_FLAGS)
@@ -29,3 +29,13 @@ ddups.o: ddups.cpp
 	 $(CC) $(CC_FLAGS) -c ddups.cpp
 findld.o: findld.cpp
 	$(CC) $(CC_FLAGS) -c findld.cpp
+stats.o: stats.cpp
+	$(CC) $(CC_FLAGS) -c stats.cpp
+data.o: data.cpp
+	$(CC) $(CC_FLAGS) -c data.cpp
+bioinf.o: bioinf.cpp
+	$(CC) $(CC_FLAGS) -c bioinf.cpp
+contamination.o: contamination.cpp
+	$(CC) $(CC_FLAGS) -c contamination.cpp
+ld_simple.o: ld_simple.cpp
+	$(CC) $(CC_FLAGS) -c ld_simple.cpp

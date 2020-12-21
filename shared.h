@@ -33,6 +33,7 @@ struct run_params {
 	string jn1;  //Joined.out file names for contamination check
 	string jn2;
 	int plines;	  //Number of elements in string defining paired-end data in specific .sam file
+    string delimit;  //Delimiter used for paired-end data.
 	int almethod; //Method of gathering sequence alignment data
 	int min_qual; //Minimum sequence quality
 	int max_qual; //Maximum sequence quality
@@ -88,6 +89,9 @@ struct run_params {
 	//Contamination
 	int decon; //Option to decontaminate Joined files in contamination code
 	
+    //LD_simple
+    int noopt; //Flag allows the printing of variant statistics (with --verb 1) while not doing the likelihood calculation
+    
 	int calc_len; //Print stats for read lengths
 	int calc_qual; //Print stats for base qualities
 	int calc_pi; //Print diversity statistics for datasets

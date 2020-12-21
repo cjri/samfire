@@ -5,7 +5,7 @@
 
 void CollectLDInfo (vector<str> sltrajs, vector<ld_info>& ld_data) {
 	for (int i=0;i<sltrajs.size();i++) {
-		for (int j=0;j<sltrajs.size();j++) {
+		for (int j=i+1;j<sltrajs.size();j++) {
 			if (i!=j) {
 				ld_info ld;
 				ld.i=sltrajs[i].locus;

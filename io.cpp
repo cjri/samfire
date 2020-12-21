@@ -42,6 +42,18 @@ void ImportSamFileNames (run_params p, vector<string>& sam_files) {
 	}
 }
 
+void ImportSamFileNamesFix (vector<string>& sam_files) {
+    ifstream in_file;
+    in_file.open("Input_files.in");
+    for (int i=0;i<1000;i++) {
+        string name;
+        if (!(in_file >> name)) break;
+        sam_files.push_back(name);
+        cout << name << "\n";
+    }
+}
+
+
 void ImportSamFile (run_params p, int i, rseq refseq, vector<string> sam_files, alldat& a) {
 	ifstream sam_file;
 	int s_length=0;
@@ -67,7 +79,7 @@ void ReadSamFile (run_params p, ifstream& sam_file, int& s_length, vector<rd>& d
 			sam_file >> line;
 			if (i==1) {
 				lstore=line;
-				string del=":";
+				string del=p.delimit;
 				string tok=lstore.substr(0,lstore.find(del));
 				if (lstore.compare(0,1,"@")!=0) {
 					for (int j=1;j<=p.plines;j++) {  //Number of lines here depends on specific .sam file formatting
@@ -1394,3 +1406,14 @@ void OutputDeconJoined (run_params p, vector<joined> t_read1, vector<joined> t_r
 	}
 }
 
+void OutputLDRawInformation (int t, vector<ld_info>& ld_data) {
+    ofstream ldf_file;
+    ostringstream convert;
+    convert << t;
+    string temp=convert.str();
+    string name = "LD_freqs"+temp+".out";
+    ldf_file.open(name.c_str());
+    for (int i=0;i<ld_data.size();i++) {
+        ldf_file << ld_data[i].i  << " " << ld_data[i].j << " " << ld_data[i].n_i1[0] << " " << ld_data[i].n_i0[0] << " " << ld_data[i].n_j1[0] << " " << ld_data[i].n_j0[0] << " " << ld_data[i].n_11[0] << " " << ld_data[i].n_10[0] << " " << ld_data[i].n_01[0] << " " << ld_data[i].n_00[0] << "\n";
+    }
+}

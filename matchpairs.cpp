@@ -51,10 +51,12 @@ void JoinPairs (int i, run_params p, vector<joined>& jseqs, vector<char>& qual, 
 	convert << i;
 	string temp=convert.str();
 	string name = "Joined"+temp+".out";
-    string qname = "Quality"+temp+".out";
+	string qname = "Quality"+temp+".out";
 	cout << name << "\n";
 	jp_file.open(name.c_str());
-    qp_file.open(qname.c_str());
+	if (p.print_qual>0) {
+		qp_file.open(qname.c_str());
+	}
 	if (p.pairs==1) {
 		JoinWithPairs(p,jseqs,qual,data,jp_file,qp_file);
 	} else {

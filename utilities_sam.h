@@ -17,3 +17,5 @@ int ScoreSim2 (string a, string b, int p, int rsize);
 string RevTr (string a);
 string RevString (string a);
 void PrintInstructions (int a);
+bool compareJoined (joined& a, joined& b);
+

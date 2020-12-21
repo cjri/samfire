@@ -23,12 +23,18 @@ void AlignSequencesSam (run_params& p, int s_length, vector<char> qual, rseq ref
 			if (data[i].ref==refseq.name) {
 				ReadCigar(i,data); //Read CIGAR string
 				q=findqual(p,i,p.min_qual,p.max_qual,qual,data);  //Assess read by median nucleotide quality
-				//cout << "Median qual " << q << "\n";
+				if (p.verb==1) {
+					cout << "Median qual " << q << "\n";
+				}
 				if (q>=p.min_qual) {  //Minimum sequence quality test
-					//cout << "Align qual " << data[i].alq << " " << p.ali_qual << "\n";
+					if (p.verb==1) {
+						cout << "Align qual " << data[i].alq << " " << p.ali_qual << "\n";
+					}
 					if (data[i].alq>=p.ali_qual) { //Minumum alignment quality
 						if (p.ali_inc==1||(p.ali_inc==0&&data[i].alq!=255)) { //Minumum alignment quality
-							//cout << data[i].alpos << " " << refseq.seq.size()-p.min_rlen << "\n";
+							if (p.verb==1) {
+								cout << data[i].alpos << " " << refseq.seq.size()-p.min_rlen << "\n";
+							}
 							if (data[i].alpos<refseq.seq.size()-p.min_rlen) { //Sequence must be aligned to have an overlap of at least the minimum number of alleles reported by a read; this weeds out misaligned sequences at the end of the reference sequence.
 								//cout << "Included\n";
 								data[i].inc=1;
@@ -161,6 +167,7 @@ int findqual (run_params p, int i, int min_qual, int max_qual, vector<char> qual
 	int median = GetMedian(0,0,qvec);
 	//cout << "Median " << median << " ";
 	int qo=median;
+	//cout << "Qvec size " << qvec.size() << " ";
 	
 	if (qvec.size()>=p.min_rlen) {
 		if (median<min_qual) {  //Edit sequence to get high quality part
@@ -212,7 +219,7 @@ int findqual (run_params p, int i, int min_qual, int max_qual, vector<char> qual
 	} else {
 		qo=-1;
 	}
-	//	cout << "Quality " << qo << "\n";
+		//cout << "Quality " << qo << "\n";
 	
 	if (qo>-1) { //Check number of minimum quality reads
 		int nm=0;

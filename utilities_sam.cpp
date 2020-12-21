@@ -32,6 +32,7 @@ void GetOptions (run_params& p, int argc, const char **argv) {
 	p.gmaf=0;
 	p.pairs=0;
 	p.plines=3;
+    p.delimit=":";
 	p.ddup=-1;
 	p.dq_cut=0.05;
 	p.dep_cut=1;
@@ -76,6 +77,7 @@ void GetOptions (run_params& p, int argc, const char **argv) {
 	p.mu=0.33333333333e-5;
 	p.len=30;
 	p.sns=0;
+    p.noopt=0;
 	int x=2;
 	while (x < argc && (argv[x][0]=='-')) {
 		p_switch=argv[x];
@@ -85,6 +87,10 @@ void GetOptions (run_params& p, int argc, const char **argv) {
 		} else if (p_switch.compare("--ref")==0) {
 			x++;
 			p.ref=argv[x];
+        } else if (p_switch.compare("--delimit")==0) {
+            x++;
+            p.delimit=argv[x];
+            cout << "Delimiting character is " << p.delimit << "\n";
 		} else if (p_switch.compare("--ref1")==0) {
 			x++;
 			p.ref1=argv[x];
@@ -281,6 +287,9 @@ void GetOptions (run_params& p, int argc, const char **argv) {
 		} else if (p_switch.compare("--sns_distances")==0) {
 			x++;
 			p.sns_distances=atoi(argv[x]);
+        } else if (p_switch.compare("--noopt")==0) {
+            x++;
+            p.noopt=atoi(argv[x]);
 		} else {
 			cout << "Incorrect usage\n ";
 			exit(1);
@@ -627,4 +636,7 @@ void PrintInstructions (int a) {
 	cout << "\n";
 }
 
+bool compareJoined (joined& a, joined& b) {
+    return a.alpos<b.alpos;
+}
 

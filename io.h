@@ -12,6 +12,7 @@ using namespace std;
 
 void GetRefSeq (ifstream& ref_file, rseq& ref);
 void ImportSamFileNames (run_params p, vector<string>& sam_files);
+void ImportSamFileNamesFix (vector<string>& sam_files);
 void ImportSamFile (run_params p, int i, rseq refseq, vector<string> sam_files, alldat& a);
 void ReadSamFile (run_params p, ifstream& sam_file, int& s_length, vector<rd>& data, rseq refseq);
 void BinDecomp (int i, vector<int>& v);
@@ -28,6 +29,7 @@ void OutputGlobalConsensus (vector< vector< vector<int> > >& all_nucs, vector<ch
 void GetVariantTotals (vector<string> sam_files, vector< vector<int> >& all_tots);
 void InputJoinedData (int n_times, vector< vector<joined> >& t_reads);
 void InputJnData (int i, vector<joined>& t_read);
+void InputSortJnData (int i, vector<joined>& t_read);
 void InputJnDataGeneral (string name, vector<joined>& t_read);
 void InputQualData (run_params p, int i, vector<ql>& q_read, vector<char> qual);
 void OutputVarFile (int i, rseq refseq, nuc r_count);
@@ -47,4 +49,5 @@ void OutputDistancesCounts (vector< vector<double> >& distances, vector< vector<
 void OutputDistancesCountsSNS (vector< vector<double> >& distances_n, vector< vector<double> >& distances_s, vector< vector<double> >& all_counts_n, vector< vector<double> >& all_counts_s);
 void ImportVariantMasks (vector<string>& sam_files, vector< vector< vector<int> > >& all_types);
 void OutputDeconJoined (run_params p, vector<joined> t_read1, vector<joined> t_read2, vector<int> filter1, vector<int> filter2);
+void OutputLDRawInformation (int t, vector<ld_info>& ld_data);
 

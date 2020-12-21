@@ -775,8 +775,14 @@ void OptimiseLD (run_params p, double C, ld_info ld, int t, vector<double>& fact
 	N=N+ld.n_10[t];
 	N=N+ld.n_01[t];
 	N=N+ld.n_00[t];
-	if (N>0) {
+    cout << "LD vals " << ld.n_11[t] << " " << ld.n_10[t] << " " << ld.n_01[t] << " " << ld.n_00[t] << "\n";
+    /*for (int i=0;i<q.size();i++) {
+        cout << q[i] << " ";
+    }
+    cout << "\n";*/
+ 	if (N>0) {
 		for (int it=0;it<max_it;it++) {
+            //cout << "Iteration " << it << "\n";
 			if (it==max_it-1) {
 				//cout << "Warning: No convergence in LD\n";
 			}
@@ -784,7 +790,7 @@ void OptimiseLD (run_params p, double C, ld_info ld, int t, vector<double>& fact
 				if (logL-logL_store>0) {
 					q_store=q;
 					if (p.verb==1) {
-					//	cout << "q " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << " LD " << q[0]-((q[0]+q[1])*(q[2]+q[3])) << " logL " << logL << "\n";
+						//cout << "q " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << " LD " << q[0]-((q[0]+q[1])*(q[2]+q[3])) << " logL " << logL << "\n";
 					}
 					logL_store=logL;
 					progress.push_back(logL);
@@ -831,7 +837,15 @@ void OptimiseLD (run_params p, double C, ld_info ld, int t, vector<double>& fact
 			N=N+ld.n_01[t];
 			N=N+ld.n_00[t];
 			logL=logL+DirichletMultiCalc(N,C,obs,inf,fact_store);
-			
+            /*cout << "N " << N << " Obs ";
+            for (int i=0;i<inf.size();i++) {
+                cout << obs[i] << " ";
+            }
+            cout << " Inf ";
+            for (int i=0;i<inf.size();i++) {
+                cout << inf[i] << " ";
+            }
+            cout << logL << "\n";*/
 			//Single-locus data i
 			inf.clear();
 			obs.clear();
