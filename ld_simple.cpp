@@ -124,41 +124,41 @@ void CollateLDData (int t, vector<str>& sltrajs, vector <vector<char> >& m_vars,
                 if (n_sites[i][j]==ld_data[l1].i) {
                     //Check data in m_vars
                     if (m_vars[i][n_sites[i][j]]==sltrajs[ld_data[l1].i].cons) {
-                        ld_data[l1].n_i0[t]++;
+                        ld_data[l1].n_i0[0]++;
                     } else if (m_vars[i][n_sites[i][j]]==sltrajs[ld_data[l1].i].nuc) {
-                        ld_data[l1].n_i1[t]++;
+                        ld_data[l1].n_i1[0]++;
                     }
                 }
                 if (n_sites[i][j]==ld_data[l1].j) {
                     //Check data in m_vars
                     if (m_vars[i][n_sites[i][j]]==sltrajs[ld_data[l1].j].cons) {
-                        ld_data[l1].n_j0[t]++;
+                        ld_data[l1].n_j0[0]++;
                     } else if (m_vars[i][n_sites[i][j]]==sltrajs[ld_data[l1].j].nuc) {
-                        ld_data[l1].n_j1[t]++;
+                        ld_data[l1].n_j1[0]++;
                     }
                 }
                 //Two-locus stats
                 for (int k=j+1;k<n_sites[i].size();k++) {
                     if (n_sites[i][j]==ld_data[l1].i&&n_sites[i][k]==ld_data[l1].j) {
                         if (m_vars[i][n_sites[i][j]]==sltrajs[ld_data[l1].i].cons&&m_vars[i][n_sites[i][k]]==sltrajs[ld_data[l1].j].cons) {
-                            ld_data[l1].n_00[t]++;
-                            ld_data[l1].n_i0[t]--;
-                            ld_data[l1].n_j0[t]--;
+                            ld_data[l1].n_00[0]++;
+                            ld_data[l1].n_i0[0]--;
+                            ld_data[l1].n_j0[0]--;
                         }
                         if (m_vars[i][n_sites[i][j]]==sltrajs[ld_data[l1].i].cons&&m_vars[i][n_sites[i][k]]==sltrajs[ld_data[l1].j].nuc) {
-                            ld_data[l1].n_01[t]++;
-                            ld_data[l1].n_i0[t]--;
-                            ld_data[l1].n_j1[t]--;
+                            ld_data[l1].n_01[0]++;
+                            ld_data[l1].n_i0[0]--;
+                            ld_data[l1].n_j1[0]--;
                         }
                         if (m_vars[i][n_sites[i][j]]==sltrajs[ld_data[l1].i].nuc&&m_vars[i][n_sites[i][k]]==sltrajs[ld_data[l1].j].cons) {
-                            ld_data[l1].n_10[t]++;
-                            ld_data[l1].n_i1[t]--;
-                            ld_data[l1].n_j0[t]--;
+                            ld_data[l1].n_10[0]++;
+                            ld_data[l1].n_i1[0]--;
+                            ld_data[l1].n_j0[0]--;
                         }
                         if (m_vars[i][n_sites[i][j]]==sltrajs[ld_data[l1].i].nuc&&m_vars[i][n_sites[i][k]]==sltrajs[ld_data[l1].j].nuc) {
-                            ld_data[l1].n_11[t]++;
-                            ld_data[l1].n_i1[t]--;
-                            ld_data[l1].n_j1[t]--;
+                            ld_data[l1].n_11[0]++;
+                            ld_data[l1].n_i1[0]--;
+                            ld_data[l1].n_j1[0]--;
                         }
                     }
                 }

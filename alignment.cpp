@@ -167,7 +167,6 @@ int findqual (run_params p, int i, int min_qual, int max_qual, vector<char> qual
 	int median = GetMedian(0,0,qvec);
 	//cout << "Median " << median << " ";
 	int qo=median;
-	//cout << "Qvec size " << qvec.size() << " ";
 	
 	if (qvec.size()>=p.min_rlen) {
 		if (median<min_qual) {  //Edit sequence to get high quality part
@@ -219,7 +218,7 @@ int findqual (run_params p, int i, int min_qual, int max_qual, vector<char> qual
 	} else {
 		qo=-1;
 	}
-		//cout << "Quality " << qo << "\n";
+	//	cout << "Quality " << qo << "\n";
 	
 	if (qo>-1) { //Check number of minimum quality reads
 		int nm=0;

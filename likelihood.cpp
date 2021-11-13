@@ -42,7 +42,6 @@ double DirichletMultiCalc (int N, double c, vector<int> obs, vector<double> inf,
 			bin=bin+gsl_sf_lngamma(b);
 		}
 		bin=bin-gsl_sf_lngamma(a);
-
 	} else {
 		bin=0;
 	}
@@ -50,6 +49,7 @@ double DirichletMultiCalc (int N, double c, vector<int> obs, vector<double> inf,
 //	cout << "L " << bin << "\n";
 	return(bin);
 }
+
 
 
 

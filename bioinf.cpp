@@ -2,7 +2,6 @@
 #include "data.h"
 #include "bioinf.h"
 #include <iostream>
-#include <sstream>
 #include <string>
 
 char TranslateCodon (vector<char> c, vector< vector<char> > cod, vector<char> aa) {
@@ -385,158 +384,6 @@ void Find_Reading_Frames (run_params p) {
 	}
 }
 
-void Find_Variant_Types_Multi (run_params p, vector<string>& sam_files) { //Code for all consensus sequences
-	vector< vector<int> > types;
-
-	//Read ORF windows
-	ifstream orf_file;
-	orf_file.open("ORFs.dat");
-	vector< vector<int> > orf;
-	int i;
-	int j;
-	for (int k=0;k<1000;k++) {
-		vector<int> o;
-		if (!(orf_file >> i)) break;
-		if (!(orf_file >> j)) break;
-		o.push_back(i);
-		o.push_back(j);
-		orf.push_back(o);
-	}
-
-	//Read total consensus sequence.  Use as backup
-	ifstream ca_file;
-	ca_file.open("Consensus_all.fa");
-	string ca;
-	ca_file >> ca;
-	ca_file >> ca;
-	const char *con_all = ca.c_str();
-	
-	//Read Consensus sequence from time zero.
-	for (int t=0;t<sam_files.size();t++) {
-		types.clear();
-		ifstream cons_file;
-		ostringstream convert;
-		convert << t;
-		string temp=convert.str();
-		string name = "Consensus"+temp+".fa";
-		cons_file.open(name.c_str());
-		string cons;
-		cons_file >> cons;
-		cons_file >> cons;
-		const char *con_seq = cons.c_str();
-		//cout << "Length " << cons.length() << "\n";
-		//cout << con_seq << "\n";
-
-		//Set up types vector
-		for (int i=0;i<cons.length();i++) {
-			vector<int> tt;
-			tt.push_back(i+1);
-			for (int j=0;j<4;j++) {
-				tt.push_back(3);
-			}
-			types.push_back(tt);
-		}
-
-		//Set up arrays
-		vector< vector<char> > cod;
-		vector<char> aa;
-		SetupAATrans(cod,aa);
-
-		//Add in S and NS changes.  Consensus is 0, s is 1, ns is 2.
-		for (int i=0;i<orf.size();i++) {
-			for (int j=orf[i][0];j<=orf[i][1];j=j+3) {
-				//cout << "j= " << j << "\n";
-				vector<char> codon;
-				vector<char> nuc;
-				codon.push_back(con_seq[j]);
-				codon.push_back(con_seq[j+1]);
-				codon.push_back(con_seq[j+2]);
-				if (codon[0]!='A'&&codon[0]!='C'&&codon[0]!='G'&&codon[0]!='T') {
-					codon[0]=con_all[j];
-				}
-				if (codon[1]!='A'&&codon[1]!='C'&&codon[1]!='G'&&codon[1]!='T') {
-					codon[1]=con_all[j+1];
-				}
-				if (codon[2]!='A'&&codon[2]!='C'&&codon[2]!='G'&&codon[2]!='T') {
-					codon[2]=con_all[j+2];
-				}
-
-				char orig_aa=FastTranslateCodon(codon,aa);
-				//if (j<=756&&j>=754) {
-					//cout << codon[0] << codon[1] << codon[2] << " " << orig_aa << "\n";
-				//}
-				vector<int> replace;
-				replace.push_back(j+1);
-				process_nuc(0,orig_aa,codon,nuc,aa,replace);
-				types[j]=replace;
-				replace.clear();
-				replace.push_back(j+2);
-				process_nuc(1,orig_aa,codon,nuc,aa,replace);
-				types[j+1]=replace;
-				replace.clear();
-				replace.push_back(j+3);
-				process_nuc(2,orig_aa,codon,nuc,aa,replace);
-				types[j+2]=replace;
-			}
-		}
-		
-		ofstream type_file;
-		name = "Variant_types"+temp+".dat";
-		type_file.open(name.c_str());
-		for (int i=0;i<types.size();i++) {
-			for (int j=0;j<types[i].size();j++) {
-				type_file << types[i][j] << " ";
-			}
-			type_file << "\n";
-		}
-
-		type_file.close();
-		cons_file.close();
-
-		if (t==0) {
-		
-			//Next step - Calculate Single locus variants
-			if (p.get_in==0) {
-				p.in_file="Single_locus_trajectories.out";
-			}
-
-			ifstream traj_file;
-			traj_file.open(p.in_file);
-			int locus;
-			char from;
-			char to;
-			int n;
-			int temp;
-			string line;
-			for (int l=0;l<100000;l++) {
-				if (!(traj_file >> locus)) break;
-				if (!(traj_file >> from)) break;
-				if (!(traj_file >> to)) break;
-				if (!(traj_file >> n)) break;
-				for (int i=0;i<n;i++) {
-					for (int j=0;j<6;j++) {
-						if (!(traj_file >> temp)) break;
-					}
-				}
-				cout << locus << " " << from << " " << to << " ";
-				//for (int k=0;k<types[locus-1].size();k++) {
-				//cout << types[locus-1][k] << " ";
-				//}
-
-				if (to=='A') {
-					PrintType(locus-1,1,types);
-				} else if (to=='C') {
-					PrintType(locus-1,2,types);
-				} else if (to=='G') {
-					PrintType(locus-1,3,types);
-				} else if (to=='T') {
-					PrintType(locus-1,4,types);
-				}
-			}
-		}
-	}
-}
-
 void Find_Variant_Types (run_params p) {
 	vector< vector<int> > types;
 
@@ -592,6 +439,9 @@ void Find_Variant_Types (run_params p) {
 			codon.push_back(con_seq[j+1]);
 			codon.push_back(con_seq[j+2]);
 			
+            if (j==0) {
+                cout << codon[0] << codon[1] << codon[2] << "\n";
+            }
 			
 			char orig_aa=FastTranslateCodon(codon,aa);
 			//if (j<=756&&j>=754) {
@@ -600,15 +450,15 @@ void Find_Variant_Types (run_params p) {
 			vector<int> replace;
 			replace.push_back(j);
 			process_nuc(0,orig_aa,codon,nuc,aa,replace);
-			types[j-1]=replace;
+			types[j]=replace;
 			replace.clear();
 			replace.push_back(j+1);
 			process_nuc(1,orig_aa,codon,nuc,aa,replace);
-			types[j]=replace;
+			types[j+1]=replace;
 			replace.clear();
 			replace.push_back(j+2);
 			process_nuc(2,orig_aa,codon,nuc,aa,replace);
-			types[j+1]=replace;
+			types[j+2]=replace;
 		}
 	}
 	ofstream type_file;
@@ -659,7 +509,6 @@ void Find_Variant_Types (run_params p) {
 		}
 	}
 }
-
 
 void PrintType(int locus, int i, vector< vector<int> > types) {
 	if (types[locus-1][i]==3) {

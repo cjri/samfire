@@ -17,6 +17,7 @@ using namespace std;
 #include "ddups.h"
 #include "data.h"
 #include "findld.h"
+#include "ld_simple.h"
 #include "io.h"
 #include "stats.h"
 #include "make_fullhaps.h"
@@ -1019,6 +1020,98 @@ int main(int argc, const char **argv) {
 			}
 		}
 		
+    } else if (method.compare("ld_simple")==0) {
+        if (p.get_in==0) {
+            p.in_file="Single_locus_trajectories_sl.out";
+        }
+       
+        //Read in list of sites
+        vector<str> sltrajs;
+        ImportSLTData(p,sltrajs);
+        if (p.verb==1) {
+            for (int i=0;i<sltrajs.size();i++) {
+                cout << sltrajs[i].locus << " " << sltrajs[i].cons << " " << sltrajs[i].nuc << "\n";
+            }
+        }
+        //Get polymorphic sites
+        vector<int> polys;
+        for (int i=0;i<sltrajs.size();i++) {
+            polys.push_back(sltrajs[i].locus);
+        }
+        //Read in times
+        vector<int> times;
+        ImportTimeData(times);
+        int n_times=times.size();
+
+        //Load sam file data
+        vector<string> sam_files;
+        ImportSamFileNamesFix(sam_files);
+        cout << sam_files.size() << "\n";
+        
+        for (int t=0;t<sam_files.size();t++) { //Read in Joined file
+            vector<joined> t_read;
+            InputJnData (t,t_read);
+            cout << "Sorting data\n";
+            sort(t_read.begin(),t_read.end(),compareJoined);
+            
+            vector <vector<char> > m_vars;
+            MapSeqToSNPLoci(p,n_times,polys,t_read,m_vars);
+            
+            //Count how many polymorphic sites are in each read.  Vector in n_sites
+            vector< vector<int> > n_sites;
+            ConstructNSites(m_vars,n_sites);
+            
+            int maxs=CountSNPsPerRead(n_sites);
+            cout << "Max coverage of SNPs in a read = " << maxs << "\n";
+            if (maxs==1) {
+                cout << "Insufficient to calculate LD\n";
+                return 0;
+            }
+            
+            //Make grid of pairs
+            vector< vector<int> > pairgrid;
+            MakePairgrid(polys,n_sites,pairgrid);
+            
+            //Vector to store LD information - go through sites and find pairs
+            if (p.verb==1) {
+                cout << "Construct LD data\n";
+            }
+            vector<ld_info> ld_data;
+            ConstructLDPairsData (pairgrid,ld_data);
+            
+            //Go through again.  Import data into ld_data.
+            if (p.verb==1) {
+                cout << "Collate LD data " << ld_data.size() << "\n";
+            }
+
+            CollateLDData (t,sltrajs,m_vars,n_sites,ld_data);
+            ConvertLocusNumbers (sltrajs,ld_data);
+            
+            if (p.verb==1) {
+                OutputLDRawInformation(t,ld_data);
+            }
+            
+            //Optimise LD : Calculations
+            vector<double> fact_store;
+            OptimiseLDSetup (fact_store,ld_data);
+            
+            //Note : Check for duplicate sites
+            
+            if (p.noopt==0) { //Flag here - might not want to do the optimisation?
+                RunLDOptimisation (p,t,fact_store,ld_data,rgen);
+            }
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 	} else if (method.compare("calc_distances")==0) {
 		vector<string> sam_files;
 		if (p.no_sam>0) {

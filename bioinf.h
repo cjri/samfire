@@ -22,8 +22,6 @@ void CalculateVariantDistances (vector< vector< vector<double> > >& all_freqs, v
 void CalculateVariantDistancesSNS (vector< vector< vector<double> > >& all_freqs, vector< vector< vector<int> > >& all_types, vector< vector<double> >& distances_s, vector< vector<double> >& distances_n, vector< vector<double> >& all_counts_s, vector< vector<double> >& all_counts_n);
 void Find_Reading_Frames (run_params p);
 void Find_Variant_Types (run_params p);
-void Find_Variant_Types_Multi (run_params p, vector<string>& sam_files);
-
 void PrintType(int locus, int i, vector< vector<int> > types);
 void process_nuc(int pos, char orig_aa, vector<char> codon, vector<char> nuc, vector<char>& aa, vector<int>& replace);
 void add_to_replace(int pos, char orig_aa, char v, vector<char> codon, vector<char> nuc, vector<char>& aa, vector<int>& replace);
